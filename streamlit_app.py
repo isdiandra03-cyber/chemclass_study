@@ -518,5 +518,4 @@ elif selected_menu == "🎨 Indikator Warna":
     st.markdown("### 📈 Grafik Aktivitas")
     
     if total > 0:
-        data = {
-            'Status': ['Selesai', 'Tertunda']
+        data = {'Status': ['Selesai', 'Tertunda']}
