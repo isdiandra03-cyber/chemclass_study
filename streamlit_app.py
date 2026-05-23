@@ -464,16 +464,16 @@ elif selected_menu == "🎵 Musik Fokus":
     st.info("💡 Catatan: Jika audio tidak muncul, coba pilih trek lain.")
 
 # ==========================================
-# 1. KONFIGURASI HALAMAN & ENERGI ESTETIKA (NEON PURPLE)
+# 5️⃣ 🧪 INDIKATOR ASAM DAN BASA
 # ==========================================
 st.set_page_config(
-    page_title="ChemClass Lab - Streamlit Edition",
+    page_title="ChemClass - Indikator asam dan basa",
     page_icon="🧪",
     layout="wide",
 )
 
 # ==========================================
-# 2. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
+# 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
 if page == "Introduction":
     st.title("HAIIIII")
@@ -531,10 +531,10 @@ INDICATORS = {
 }
 
 # ==========================================
-# 3. HEADER UTAMA
+# 2. HEADER UTAMA
 # ==========================================
-st.title("🧪 ChemClass Lab - Python Edition")
-st.write("Belajar sains asam-basa dan koding Python pemula sekaligus dalam satu platform terpadu.")
+st.title("🧪 ChemClass - Indikator asam dan basa")
+st.write("Belajar sains asam-basa bersama ChemClass!")
 
 menu = st.tabs(["📊 LAB SIMULATOR"])
 
