@@ -519,5 +519,4 @@ elif selected_menu == "🎨 Indikator Warna":
     
     if total > 0:
         data = {
-            'Status': ['Selesai', 'Tertunda'],
-            'J
+            'Status': ['Selesai', 'Tertunda']
