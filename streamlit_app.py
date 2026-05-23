@@ -246,7 +246,7 @@ elif selected_menu == "🎵 Musik Fokus":
     st.info("💡 Catatan: Jika audio tidak muncul, coba pilih trek lain. Beberapa trek adalah contoh gratis.")
 
 # ==========================================
-# 1. KONFIGURASI HALAMAN & ENERGI ESTETIKA (NEON PURPLE)
+# 5. KONFIGURASI HALAMAN & ENERGI ESTETIKA (NEON PURPLE)
 # ==========================================
 st.set_page_config(
     page_title="ChemClass Lab - Streamlit Edition",
@@ -255,7 +255,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
+# 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
 if page == "Introduction":
     st.title("HAIIIII")
@@ -313,7 +313,7 @@ INDICATORS = {
 }
 
 # ==========================================
-# 3. HEADER UTAMA
+# 2. HEADER UTAMA
 # ==========================================
 st.title("🧪 ChemClass Lab - Python Edition")
 st.write("Belajar sains asam-basa dan koding Python pemula sekaligus dalam satu platform terpadu.")
