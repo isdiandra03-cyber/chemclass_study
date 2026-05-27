@@ -489,9 +489,6 @@ st.set_page_config(
 # ==========================================
 # 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
-if page == "Indikator asam dan basa":
-    st.title("HAIIIII")
-
 
 elif page == "Simulasi":
     st.title("Coba simulasi ini")
