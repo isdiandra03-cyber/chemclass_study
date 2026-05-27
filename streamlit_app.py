@@ -245,7 +245,20 @@ selected_menu = st.sidebar.radio(
     label_visibility="collapsed"
 )
 
-st.session_state.current_menu = selected_menu
+if selected_menu == "🏠 Dashboard":
+    st.title("🏠 Dashboard")
+
+elif selected_menu == "✅ To-Do List":
+    st.title("✅ To-Do List")
+
+elif selected_menu == "⏱️ Timer Belajar":
+    st.title("⏱️ Timer Belajar")
+
+elif selected_menu == "🎵 Musik Fokus":
+    st.title("🎵 Musik Fokus")
+
+elif selected_menu == "Indikator asam dan basa":
+    st.title("🧪 Indikator Asam dan Basa")
 
 # ============================================================
 # 📝 FUNGSI-FUNGSI TO-DO LIST
