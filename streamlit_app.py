@@ -2,6 +2,7 @@ import streamlit as st
 import time
 from datetime import datetime
 import pandas as pd
+import math
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(
@@ -559,9 +560,6 @@ def hitung_warna_indikator(ph, ind_data):
     else:
         return ind_data["mid_color"]
 
-# ==========================================
-# TAB 1: LAB SIMULATOR
-# ==========================================
 with menu[0]:
     col_input, col_display = st.columns([5, 7])
     
