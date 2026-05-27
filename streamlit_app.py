@@ -489,7 +489,7 @@ st.set_page_config(
 # ==========================================
 # 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
-
+if page == "
 elif page == "Simulasi":
     st.title("Coba simulasi ini")
 CHEMICALS = [
