@@ -476,21 +476,11 @@ elif selected_menu == "🎵 Musik Fokus":
     
     st.markdown("---")
     st.info("💡 Catatan: Jika audio tidak muncul, coba pilih trek lain.")
-
-# ==========================================
-# 5️⃣ 🧪 INDIKATOR ASAM DAN BASA
-# ==========================================
-st.set_page_config(
-    page_title="ChemClass - Indikator asam dan basa",
-    page_icon="🧪",
-    layout="wide",
-)
-
 # ==========================================
 # 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
-elif selected_menu == "Simulasi":
-        st.title("Coba simulasi ini")
+elif selected_menu == "Indikator asam dan basa":
+    st.markdown("# 🧪 Indikator Asam dan Basa")
 CHEMICALS = [
     {"id": "hcl", "name": "Asam Klorida (HCl)", "formula": "HCl", "pH": 1.0, "type": "asam", "category": "Laboratorium", "common": "Asam kuat pembersih porselen", "dissociation": "HCl → H⁺ + Cl⁻"},
     {"id": "h2so4", "name": "Asam Sulfat (Air Aki)", "formula": "H₂SO₄", "pH": 1.5, "type": "asam", "category": "Laboratorium", "common": "Air aki kendaraan pekat", "dissociation": "H₂SO₄ → 2H⁺ + SO₄²⁻"},
