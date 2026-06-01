@@ -479,7 +479,7 @@ elif selected_menu == "🎵 Musik Fokus":
 # ==========================================
 # 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
-elif selected_menu == "Indikator asam dan basa":
+    elif selected_menu == "Indikator asam dan basa":
     st.markdown("# 🧪 Indikator Asam dan Basa")
 CHEMICALS = [
     {"id": "hcl", "name": "Asam Klorida (HCl)", "formula": "HCl", "pH": 1.0, "type": "asam", "category": "Laboratorium", "common": "Asam kuat pembersih porselen", "dissociation": "HCl → H⁺ + Cl⁻"},
