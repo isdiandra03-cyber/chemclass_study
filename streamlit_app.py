@@ -489,7 +489,7 @@ st.set_page_config(
 # ==========================================
 # 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
 # ==========================================
-if page == "Simulasi":
+if selected_menu == "Simulasi":
     st.title("Coba simulasi ini")
 CHEMICALS = [
     {"id": "hcl", "name": "Asam Klorida (HCl)", "formula": "HCl", "pH": 1.0, "type": "asam", "category": "Laboratorium", "common": "Asam kuat pembersih porselen", "dissociation": "HCl → H⁺ + Cl⁻"},
