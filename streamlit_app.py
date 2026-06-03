@@ -36,10 +36,11 @@ def apply_theme(theme):
         # === THEME WHITE (TERANG) ===
         st.markdown("""
            <style>
-            /* Background Utama - Hitam */
+            /* Background Utama - Putih */
             .stApp {
                 background-color: #ffffff;
             }
+            
             /* Font untuk semua teks */
             h1, h2, h3, h4, h5, h6, p, label, span, div {
                 color: #1a1a1a !important;
@@ -60,7 +61,7 @@ def apply_theme(theme):
             
             /* Input fields */
             .stTextInput > div > div > input {
-                background-color: #87CEEB;
+                background-color: #ffffff;
                 color: #1a1a1a;
                 border: 1px solid #ddd;
             }
@@ -235,7 +236,7 @@ menu_options = [
     "✅ To-Do List", 
     "⏱️ Timer Belajar", 
     "🎵 Musik Fokus", 
-    "Indikator asam dan basa"
+    "🧪Indikator asam dan basa"
 ]
 
 selected_menu = st.sidebar.radio(
@@ -256,8 +257,7 @@ elif selected_menu == "⏱️ Timer Belajar":
 elif selected_menu == "🎵 Musik Fokus":
     st.title("🎵 Musik Fokus")
 
-elif selected_menu == "Indikator asam dan basa":
-    st.title("🧪 Indikator Asam dan Basa")
+elif selected_menu == "🧪Indikator asam dan basa"
 
 # ============================================================
 # 📝 FUNGSI-FUNGSI TO-DO LIST
@@ -305,7 +305,7 @@ if selected_menu == "🏠 Dashboard":
     st.markdown("---")
     
     # Informasi
-    if st.session_state.theme == "Black":
+    if st.session_state.theme == "White":
         st.success("💡 Tip: Gunakan teknik Pomodoro (25 menit belajar, 5 menit istirahat)!")
     else:
         st.info("💡 Tip: Gunakan teknik Pomodoro (25 menit belajar, 5 menit istirahat) untuk hasil maksimal!")
@@ -410,7 +410,7 @@ elif selected_menu == "⏱️ Timer Belajar":
             status_text = "Fokus Penuh"
         
         # Card timer
-        if st.session_state.theme == "Black":
+        if st.session_state.theme == "White":
             bg_color = "#2d2d2d"
             text_color = "#ffffff"
         else:
