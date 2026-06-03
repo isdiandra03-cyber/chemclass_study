@@ -257,7 +257,8 @@ elif selected_menu == "⏱️ Timer Belajar":
 elif selected_menu == "🎵 Musik Fokus":
     st.title("🎵 Musik Fokus")
 
-elif selected_menu == "🧪Indikator asam dan basa"
+elif selected_menu == "🧪Indikator asam dan basa":
+    st.title("🧪Indikator asam dan basa")
 
 # ============================================================
 # 📝 FUNGSI-FUNGSI TO-DO LIST
