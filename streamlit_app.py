@@ -38,7 +38,7 @@ def apply_theme(theme):
             <style>
             /* Background Utama */
             .stApp {
-                background-color: #ffffff;
+                background-color: #0F172A;
             }
             
             /* Font untuk semua teks */
