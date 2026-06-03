@@ -35,14 +35,11 @@ def apply_theme(theme):
     if theme == "White":
         # === THEME WHITE (TERANG) ===
         st.markdown("""
-            <style>
-             background: linear-gradient(
-        135deg,
-        #c3ecff 0%,
-        #d5c5ff 50%,
-        #ffe5f1 100%
-    );
-            
+           <style>
+            /* Background Utama - Hitam */
+            .stApp {
+                background-color: #ffffff;
+            }
             /* Font untuk semua teks */
             h1, h2, h3, h4, h5, h6, p, label, span, div {
                 color: #1a1a1a !important;
