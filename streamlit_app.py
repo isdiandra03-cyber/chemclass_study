@@ -36,10 +36,12 @@ def apply_theme(theme):
         # === THEME WHITE (TERANG) ===
         st.markdown("""
             <style>
-            /* Background Utama */
-            .stApp {
-                background-color: #87CEEB;
-            }
+             background: linear-gradient(
+        135deg,
+        #c3ecff 0%,
+        #d5c5ff 50%,
+        #ffe5f1 100%
+    );
             
             /* Font untuk semua teks */
             h1, h2, h3, h4, h5, h6, p, label, span, div {
