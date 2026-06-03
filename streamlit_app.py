@@ -246,16 +246,16 @@ selected_menu = st.sidebar.radio(
 )
 
 if selected_menu == "🏠 Dashboard":
-    st.title("🏠 Dashboard")
+    st.title("🧪Indikator asam dan basa")
 
 elif selected_menu == "✅ To-Do List":
-    st.title("✅ To-Do List")
+    st.title("🧪Indikator asam dan basa")
 
 elif selected_menu == "⏱️ Timer Belajar":
-    st.title("⏱️ Timer Belajar")
+    st.title("🧪Indikator asam dan basa")
 
 elif selected_menu == "🎵 Musik Fokus":
-    st.title("🎵 Musik Fokus")
+    st.title("🧪Indikator asam dan basa")
 
 elif selected_menu == "🧪Indikator asam dan basa":
     st.title("🧪Indikator asam dan basa")
