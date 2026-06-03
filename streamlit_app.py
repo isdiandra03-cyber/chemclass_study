@@ -38,7 +38,7 @@ def apply_theme(theme):
             <style>
             /* Background Utama */
             .stApp {
-                background-color: #0F172A;
+                background-color: #87CEEB;
             }
             
             /* Font untuk semua teks */
@@ -61,7 +61,7 @@ def apply_theme(theme):
             
             /* Input fields */
             .stTextInput > div > div > input {
-                background-color: #ffffff;
+                background-color: #87CEEB;
                 color: #1a1a1a;
                 border: 1px solid #ddd;
             }
