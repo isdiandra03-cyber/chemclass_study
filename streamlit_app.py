@@ -285,7 +285,7 @@ def delete_task(index):
 # ═══════════════════════════════════════════════════════════
 # 1️⃣ DASHBOARD UTAMA
 # ═══════════════════════════════════════════════════════════
-if selected_menu == "🏠 Dashboard":
+if selected_page == "🏠 Dashboard":
     st.markdown("# 📚 Dashboard Belajar")
     st.markdown("Selamat datang! Pilih menu di sidebar untuk memulai.")
     
