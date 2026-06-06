@@ -466,8 +466,8 @@ elif selected_menu == "🎵 Musik Fokus":
     
     # Pilihan musik
     musik_options = {
-        "🎵 Lo-Fi Chill Beats": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        "🌊 Ambient Nature Sounds": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        "Just the way you are": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.12.27.mpeg",
+        "Kembali untukku": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.14.44.mpeg",
         "🌙 Piano Relaksasi": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
         "⚡ Deep Focus Techno": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
         "☕ Coffee Shop Vibes": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
