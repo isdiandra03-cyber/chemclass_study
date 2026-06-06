@@ -1,446 +1,524 @@
+# =====================================================================
+# 📚 DASHBOARD BELAJAR - KIMIA ASAM BASA
+# Versi: 2.0 (Fixed + Enhanced)
+# =====================================================================
+
 import streamlit as st
 import time
-from datetime import datetime
-import pandas as pd
 import math
+import pandas as pd
+from datetime import datetime
 
-# --- KONFIGURASI HALAMAN ---
+# ─────────────────────────────────────────────────────────────────────
+# KONFIGURASI HALAMAN  ← hanya boleh dipanggil SEKALI di paling atas
+# ─────────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Dashboard Belajar",
-    page_icon="📚",
-    layout="wide"
+    page_title="Dashboard Belajar Kimia",
+    page_icon="🧪",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# --- INISIALISASI SESSION STATE ---
-if 'theme' not in st.session_state:
-    st.session_state.theme = "White"
+# ─────────────────────────────────────────────────────────────────────
+# SESSION STATE  ← inisialisasi sekali
+# ─────────────────────────────────────────────────────────────────────
+for key, default in {
+    "theme": "Dark",
+    "tasks": [],
+    "timer_running": False,
+    "time_left": 25 * 60,
+    "selected_menu": "🏠 Dashboard",
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-if 'tasks' not in st.session_state:
-    st.session_state.tasks = []
 
-if 'timer_running' not in st.session_state:
-    st.session_state.timer_running = False
+# ─────────────────────────────────────────────────────────────────────
+# DATA: INDIKATOR
+# ─────────────────────────────────────────────────────────────────────
+INDICATORS = {
+    "lakmus":    {"name": "Kertas Lakmus",         "range": (4.5, 8.3),  "low": "#ef4444", "low_lbl": "MERAH – Asam",        "high": "#3b82f6", "high_lbl": "BIRU – Basa",         "mid": "#a855f7", "mid_lbl": "UNGU – Transisi"},
+    "pp":        {"name": "Fenolftalein (PP)",      "range": (8.2, 10.0), "low": "#f1f5f9", "low_lbl": "TAK BERWARNA – Asam", "high": "#ec4899", "high_lbl": "MERAH MUDA – Basa",   "mid": "#fbcfe8", "mid_lbl": "MERAH MUDA PUCAT"},
+    "btb":       {"name": "Bromothymol Blue (BTB)", "range": (6.0, 7.6),  "low": "#eab308", "low_lbl": "KUNING – Asam",       "high": "#1d4ed8", "high_lbl": "BIRU – Basa",         "mid": "#22c55e", "mid_lbl": "HIJAU – Netral"},
+    "mr":        {"name": "Metil Merah",            "range": (4.4, 6.2),  "low": "#dc2626", "low_lbl": "MERAH – Asam",        "high": "#ca8a04", "high_lbl": "KUNING – Basa",       "mid": "#f97316", "mid_lbl": "JINGGA – Transisi"},
+    "mo":        {"name": "Metil Oranye",           "range": (3.1, 4.4),  "low": "#f97316", "low_lbl": "MERAH-ORANYE – Asam", "high": "#facc15", "high_lbl": "KUNING – Basa",       "mid": "#fb923c", "mid_lbl": "ORANYE – Transisi"},
+    "universal": {"name": "Indikator Universal",    "range": (0.0, 14.0), "low": "#dc2626", "low_lbl": "MERAH – Sangat Asam", "high": "#581c87", "high_lbl": "UNGU – Sangat Basa",  "mid": "#16a34a", "mid_lbl": "HIJAU – Netral"},
+}
 
-if 'time_left' not in st.session_state:
-    st.session_state.time_left = 25 * 60
-
-if 'current_menu' not in st.session_state:
-    st.session_state.current_menu = "🏠 Dashboard"
-
-# ============================================================
-# 🎨 FUNGSI apply_theme - GANTI WARNA BACKGROUND & FONT
-# ============================================================
-
-def apply_theme(theme):
-    if theme == "White":
-        # === THEME WHITE (TERANG) ===
-        st.markdown("""
-           <style>
-            /* Background Utama - Putih */
-            .stApp {
-                background-color: #ffffff;
-            }
-            
-            /* Font untuk semua teks */
-            h1, h2, h3, h4, h5, h6, p, label, span, div {
-                color: #1a1a1a !important;
-            }
-            
-            /* Font khusus untuk metrics */
-            .stMetric .stMetricLabel {
-                color: #333333 !important;
-            }
-            .stMetric .stMetricValue {
-                color: #1a1a1a !important;
-            }
-            
-            /* Sidebar */
-            section[data-testid="stSidebar"] {
-                background-color: #f8f9fa;
-            }
-            
-            /* Input fields */
-            .stTextInput > div > div > input {
-                background-color: #ffffff;
-                color: #1a1a1a;
-                border: 1px solid #ddd;
-            }
-            
-            /* Card / Container */
-            .custom-card {
-                background-color: #f8f9fa;
-                padding: 20px;
-                border-radius: 15px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                color: #1a1a1a;
-            }
-            
-            /* Tombol */
-            .stButton > button {
-                background-color: #3498db;
-                color: white !important;
-            }
-            
-            /* Progress bar */
-            .stProgress > div > div > div {
-                background-color: #3498db;
-            }
-            
-            /* Info/Warning/Success messages */
-            .stAlert {
-                color: #1a1a1a;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-        
-    else:
-        # === THEME BLACK (GELAP) - FONT PUTIH ===
-        st.markdown("""
-            <style>
-            /* Background Utama - Hitam */
-            .stApp {
-                background-color: #1a1a1a;
-            }
-            
-            /* Font untuk semua teks - PUTIH */
-            h1, h2, h3, h4, h5, h6, p, label, span, div {
-                color: #ffffff !important;
-            }
-            
-            /* Font untuk Streamlit elements */
-            .stMarkdown, .stMarkdown p {
-                color: #ffffff !important;
-            }
-            
-            /* Metrics */
-            .stMetric .stMetricLabel {
-                color: #e0e0e0 !important;
-            }
-            .stMetric .stMetricValue {
-                color: #ffffff !important;
-            }
-            
-            /* Sidebar - Abu gelap */
-            section[data-testid="stSidebar"] {
-                background-color: #2d2d2d;
-            }
-            
-            /* Input fields */
-            .stTextInput > div > div > input {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
-                border: 1px solid #555;
-            }
-            
-            /* Input label */
-            .stTextInput label {
-                color: #ffffff !important;
-            }
-            
-            /* Selectbox / Dropdown */
-            .stSelectbox label {
-                color: #ffffff !important;
-            }
-            .stSelectbox > div > div > div {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
-            }
-            
-            /* Radio button */
-            .stRadio label {
-                color: #ffffff !important;
-            }
-            
-            /* Card / Container */
-            .custom-card {
-                background-color: #2d2d2d;
-                padding: 20px;
-                border-radius: 15px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-                color: #ffffff;
-            }
-            
-            /* Tombol - Warna berbeda untuk Black theme */
-            .stButton > button {
-                background-color: #e74c3c !important;
-                color: #ffffff !important;
-            }
-            
-            /* Checkbox */
-            .stCheckbox label {
-                color: #ffffff !important;
-            }
-            
-            /* Progress bar */
-            .stProgress > div > div > div {
-                background-color: #e74c3c;
-            }
-            
-            /* Alert/Info/Warning/Success messages */
-            .stAlert {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
-            }
-            
-            /* Expander */
-            .streamlit-expanderHeader {
-                background-color: #2d2d2d !important;
-                color: #ffffff !important;
-            }
-            
-            /* Separator */
-            hr {
-                border-color: #555555 !important;
-            }
-            
-            /* Audio player */
-            .stAudio {
-                background-color: #2d2d2d;
-                border-radius: 10px;
-                padding: 10px;
-            }
-            </style>
-        """, unsafe_allow_html=True)
-
-# ============================================================
-# 🚀 SIDEBAR - PENGATURAN THEME & MENU
-# ============================================================
-
-with st.sidebar:
-    st.markdown("## ⚙️ Pengaturan")
+# ─────────────────────────────────────────────────────────────────────
+# DATA: ZAT KIMIA
+# ─────────────────────────────────────────────────────────────────────
+CHEMICALS = [
+    {"name":"HCl (Asam Klorida)",       "formula":"HCl",        "pH":1.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Asam kuat pembersih porselen",     "dis":"HCl → H⁺ + Cl⁻"},
+    {"name":"H₂SO₄ (Asam Sulfat)",      "formula":"H₂SO₄",      "pH":1.5,  "type":"asam",   "cat":"Laboratorium",  "desc":"Air aki kendaraan",                "dis":"H₂SO₄ → 2H⁺ + SO₄²⁻"},
+    {"name":"HNO₃ (Asam Nitrat)",       "formula":"HNO₃",       "pH":1.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Oksidator kuat, pelarut logam",    "dis":"HNO₃ → H⁺ + NO₃⁻"},
+    {"name":"CH₃COOH (Cuka)",           "formula":"CH₃COOH",    "pH":3.0,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Cuka dapur 5%",                    "dis":"CH₃COOH ⇌ H⁺ + CH₃COO⁻"},
+    {"name":"C₆H₈O₇ (Asam Sitrat)",     "formula":"C₆H₈O₇",     "pH":2.2,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Sari jeruk lemon",                 "dis":"C₆H₈O₇ ⇌ 3H⁺ + C₆H₅O₇³⁻"},
+    {"name":"HF (Asam Fluorida)",       "formula":"HF",         "pH":3.2,  "type":"asam",   "cat":"Laboratorium",  "desc":"Pelarut silika dan kaca",          "dis":"HF ⇌ H⁺ + F⁻"},
+    {"name":"H₂CO₃ (Asam Karbonat)",    "formula":"H₂CO₃",      "pH":4.6,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Soda berkarbonasi",                "dis":"H₂CO₃ ⇌ 2H⁺ + CO₃²⁻"},
+    {"name":"H₂O (Air Murni)",          "formula":"H₂O",        "pH":7.0,  "type":"netral", "cat":"Sehari-hari",   "desc":"Air suling / Aquades",             "dis":"H₂O ⇌ H⁺ + OH⁻"},
+    {"name":"NaCl (Garam Dapur)",       "formula":"NaCl",       "pH":7.0,  "type":"netral", "cat":"Sehari-hari",   "desc":"Garam dapur biasa",                "dis":"NaCl → Na⁺ + Cl⁻"},
+    {"name":"NaHCO₃ (Soda Kue)",        "formula":"NaHCO₃",     "pH":8.3,  "type":"basa",   "cat":"Sehari-hari",   "desc":"Pengembang roti",                  "dis":"NaHCO₃ → Na⁺ + HCO₃⁻"},
+    {"name":"Na₂CO₃ (Soda Abu)",        "formula":"Na₂CO₃",     "pH":11.6, "type":"basa",   "cat":"Standar Primer","desc":"Standarisasi larutan asam",        "dis":"Na₂CO₃ → 2Na⁺ + CO₃²⁻"},
+    {"name":"NH₃ (Amonia)",             "formula":"NH₃",        "pH":11.1, "type":"basa",   "cat":"Laboratorium",  "desc":"Basa lemah berbau tajam",          "dis":"NH₃ + H₂O ⇌ NH₄⁺ + OH⁻"},
+    {"name":"Ca(OH)₂ (Air Kapur)",      "formula":"Ca(OH)₂",    "pH":11.5, "type":"basa",   "cat":"Laboratorium",  "desc":"Air kapur sirih",                  "dis":"Ca(OH)₂ → Ca²⁺ + 2OH⁻"},
+    {"name":"NaOH (Soda Api)",          "formula":"NaOH",       "pH":13.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Basa kuat",                        "dis":"NaOH → Na⁺ + OH⁻"},
+    {"name":"KOH (Kalium Hidroksida)",  "formula":"KOH",        "pH":13.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Basa kuat reaksi penyabunan",      "dis":"KOH → K⁺ + OH⁻"},
+    {"name":"Mg(OH)₂ (Susu Magnesia)",  "formula":"Mg(OH)₂",    "pH":10.5, "type":"basa",   "cat":"Farmasi",       "desc":"Antasida obat maag",               "dis":"Mg(OH)₂ ⇌ Mg²⁺ + 2OH⁻"},
+    {"name":"KMnO₄ (Kalium Perm.)",     "formula":"KMnO₄",      "pH":7.5,  "type":"netral", "cat":"Permanganometri","desc":"Oksidator kuat autoindikator",    "dis":"KMnO₄ → K⁺ + MnO₄⁻"},
+    {"name":"CuSO₄ (Tembaga Sulfat)",   "formula":"CuSO₄",      "pH":4.0,  "type":"asam",   "cat":"Analisis",      "desc":"Reagen biuret untuk protein",      "dis":"CuSO₄ → Cu²⁺ + SO₄²⁻"},
+    {"name":"AgNO₃ (Perak Nitrat)",     "formula":"AgNO₃",      "pH":5.5,  "type":"asam",   "cat":"Argentometri",  "desc":"Titran penentuan klorida",         "dis":"AgNO₃ → Ag⁺ + NO₃⁻"},
+    {"name":"KHP (Standar Primer)",     "formula":"KHC₈H₄O₄",   "pH":4.0,  "type":"asam",   "cat":"Standar Primer","desc":"Standarisasi larutan NaOH",        "dis":"KHC₈H₄O₄ → K⁺ + HC₈H₄O₄⁻"},
     
-    # === PILIHAN THEME ===
-    st.markdown("### 🎨 Tema Background")
-    theme_option = st.radio(
-        "Pilih tema:",
-        ["⬜ White (Terang)", "⬛ Black (Gelap)"],
-        index=0 if st.session_state.theme == "White" else 1
-    )
-    
-    if "White" in theme_option:
-        st.session_state.theme = "White"
-    else:
-        st.session_state.theme = "Black"
-    
-    # Terapkan tema saat pertama kali load
-    apply_theme(st.session_state.theme)
-    
-    st.markdown("---")
-
-# === MENU UTAMA DI SIDEBAR ===
-st.sidebar.markdown("---")
-st.sidebar.title("📚 Menu Dashboard")
-
-menu_options = [
-    "🏠 Dashboard", 
-    "✅ To-Do List", 
-    "⏱️ Timer Belajar", 
-    "🎵 Musik Fokus", 
-    "🧪Indikator asam dan basa"
+    # --- 80 SENYAWA TAMBAHAN ---
+    {"name":"HBr (Asam Bromida)",       "formula":"HBr",        "pH":1.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Asam kuat",                        "dis":"HBr → H⁺ + Br⁻"},
+    {"name":"HI (Asam Iodida)",         "formula":"HI",         "pH":1.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Asam kuat",                        "dis":"HI → H⁺ + I⁻"},
+    {"name":"HClO₄ (Asam Perklorat)",   "formula":"HClO₄",      "pH":1.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Asam kuat oksidator",              "dis":"HClO₄ → H⁺ + ClO₄⁻"},
+    {"name":"H₃PO₄ (Asam Fosfat)",      "formula":"H₃PO₄",      "pH":1.5,  "type":"asam",   "cat":"Industri",      "desc":"Bahan pupuk dan minuman",          "dis":"H₃PO₄ ⇌ H⁺ + H₂PO₄⁻"},
+    {"name":"HCOOH (Asam Format)",      "formula":"HCOOH",      "pH":2.3,  "type":"asam",   "cat":"Industri",      "desc":"Penggumpal lateks",                "dis":"HCOOH ⇌ H⁺ + HCOO⁻"},
+    {"name":"H₂SO₃ (Asam Sulfit)",      "formula":"H₂SO₃",      "pH":1.5,  "type":"asam",   "cat":"Laboratorium",  "desc":"Zat pereduksi",                    "dis":"H₂SO₃ ⇌ 2H⁺ + SO₃²⁻"},
+    {"name":"HNO₂ (Asam Nitrit)",       "formula":"HNO₂",       "pH":2.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Reagen sintesis organik",          "dis":"HNO₂ ⇌ H⁺ + NO₂⁻"},
+    {"name":"H₂S (Asam Sulfida)",       "formula":"H₂S",        "pH":4.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Gas berbau busuk khas",            "dis":"H₂S ⇌ 2H⁺ + S²⁻"},
+    {"name":"HCN (Asam Sianida)",       "formula":"HCN",        "pH":5.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Zat sangat beracun",               "dis":"HCN ⇌ H⁺ + CN⁻"},
+    {"name":"H₂C₂O₄ (Asam Oksalat)",    "formula":"H₂C₂O₄",     "pH":1.3,  "type":"asam",   "cat":"Laboratorium",  "desc":"Penghilang karat",                 "dis":"H₂C₂O₄ ⇌ 2H⁺ + C₂O₄²⁻"},
+    {"name":"C₃H₆O₃ (Asam Laktat)",     "formula":"C₃H₆O₃",     "pH":2.4,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Asam dalam susu asam",             "dis":"C₃H₆O₃ ⇌ H⁺ + C₃H₅O₃⁻"},
+    {"name":"C₆H₅COOH (Asam Benzoat)",  "formula":"C₆H₅COOH",   "pH":2.8,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Pengawet makanan",                 "dis":"C₆H₅COOH ⇌ H⁺ + C₆H₅COO⁻"},
+    {"name":"C₄H₆O₆ (Asam Tartarat)",   "formula":"C₄H₆O₆",     "pH":2.9,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Asam pada buah anggur",            "dis":"C₄H₆O₆ ⇌ 2H⁺ + C₄H₄O₆²⁻"},
+    {"name":"C₄H₄O₄ (Asam Maleat)",     "formula":"C₄H₄O₄",     "pH":1.9,  "type":"asam",   "cat":"Industri",      "desc":"Bahan baku polimer",               "dis":"C₄H₄O₄ ⇌ 2H⁺ + C₄H₂O₄²⁻"},
+    {"name":"C₄H₆O₄ (Asam Suksinat)",   "formula":"C₄H₆O₄",     "pH":2.7,  "type":"asam",   "cat":"Industri",      "desc":"Zat aditif makanan",               "dis":"C₄H₆O₄ ⇌ 2H⁺ + C₄H₄O₄²⁻"},
+    {"name":"C₆H₈O₆ (Asam Askorbat)",   "formula":"C₆H₈O₆",     "pH":3.0,  "type":"asam",   "cat":"Farmasi",       "desc":"Vitamin C",                        "dis":"C₆H₈O₆ ⇌ H⁺ + C₆H₇O₆⁻"},
+    {"name":"HClO₃ (Asam Klorat)",      "formula":"HClO₃",      "pH":1.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Oksidator kuat",                   "dis":"HClO₃ → H⁺ + ClO₃⁻"},
+    {"name":"HClO (Asam Hipoklorit)",   "formula":"HClO",       "pH":4.0,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Bahan pemutih",                    "dis":"HClO ⇌ H⁺ + ClO⁻"},
+    {"name":"H₃BO₃ (Asam Borat)",       "formula":"H₃BO₃",      "pH":5.1,  "type":"asam",   "cat":"Farmasi",       "desc":"Antiseptik ringan pencuci mata",   "dis":"H₃BO₃ + H₂O ⇌ H⁺ + B(OH)₄⁻"},
+    {"name":"C₂H₅COOH (Asam Propanoat)","formula":"C₂H₅COOH",   "pH":2.9,  "type":"asam",   "cat":"Industri",      "desc":"Pengawet roti",                    "dis":"C₂H₅COOH ⇌ H⁺ + C₂H₅COO⁻"},
+    {"name":"LiOH (Litium Hidroksida)", "formula":"LiOH",       "pH":13.0, "type":"basa",   "cat":"Industri",      "desc":"Penyerap CO₂",                     "dis":"LiOH → Li⁺ + OH⁻"},
+    {"name":"Ba(OH)₂ (Barium Hidroks.)","formula":"Ba(OH)₂",    "pH":13.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Basa kuat analitik",               "dis":"Ba(OH)₂ → Ba²⁺ + 2OH⁻"},
+    {"name":"Sr(OH)₂ (Stronsium Hidr.)","formula":"Sr(OH)₂",    "pH":13.0, "type":"basa",   "cat":"Industri",      "desc":"Pemurnian gula",                   "dis":"Sr(OH)₂ → Sr²⁺ + 2OH⁻"},
+    {"name":"Al(OH)₃ (Aluminium Hidr.)","formula":"Al(OH)₃",    "pH":9.0,  "type":"basa",   "cat":"Farmasi",       "desc":"Komponen antasida",                "dis":"Al(OH)₃ ⇌ Al³⁺ + 3OH⁻"},
+    {"name":"Fe(OH)₃ (Besi(III) Hidr.)","formula":"Fe(OH)₃",    "pH":8.0,  "type":"basa",   "cat":"Laboratorium",  "desc":"Endapan cokelat kemerahan",        "dis":"Fe(OH)₃ ⇌ Fe³⁺ + 3OH⁻"},
+    {"name":"Fe(OH)₂ (Besi(II) Hidr.)", "formula":"Fe(OH)₂",    "pH":8.5,  "type":"basa",   "cat":"Laboratorium",  "desc":"Endapan hijau",                    "dis":"Fe(OH)₂ ⇌ Fe²⁺ + 2OH⁻"},
+    {"name":"Zn(OH)₂ (Seng Hidroksida)","formula":"Zn(OH)₂",    "pH":8.0,  "type":"basa",   "cat":"Laboratorium",  "desc":"Basa amfoter",                     "dis":"Zn(OH)₂ ⇌ Zn²⁺ + 2OH⁻"},
+    {"name":"Cu(OH)₂ (Tembaga(II) Hid)","formula":"Cu(OH)₂",    "pH":8.0,  "type":"basa",   "cat":"Laboratorium",  "desc":"Endapan biru muda",                "dis":"Cu(OH)₂ ⇌ Cu²⁺ + 2OH⁻"},
+    {"name":"NH₂OH (Hidroksilamin)",    "formula":"NH₂OH",      "pH":9.0,  "type":"basa",   "cat":"Laboratorium",  "desc":"Zat pereduksi",                    "dis":"NH₂OH + H₂O ⇌ NH₃OH⁺ + OH⁻"},
+    {"name":"CH₃NH₂ (Metilamin)",       "formula":"CH₃NH₂",     "pH":11.8, "type":"basa",   "cat":"Industri",      "desc":"Bahan sintesis kimia organik",     "dis":"CH₃NH₂ + H₂O ⇌ CH₃NH₃⁺ + OH⁻"},
+    {"name":"C₆H₅NH₂ (Anilin)",         "formula":"C₆H₅NH₂",    "pH":8.8,  "type":"basa",   "cat":"Industri",      "desc":"Bahan baku pewarna sintesis",      "dis":"C₆H₅NH₂ + H₂O ⇌ C₆H₅NH₃⁺ + OH⁻"},
+    {"name":"C₅H₅N (Piridin)",          "formula":"C₅H₅N",      "pH":8.8,  "type":"basa",   "cat":"Laboratorium",  "desc":"Pelarut basa organik",             "dis":"C₅H₅N + H₂O ⇌ C₅H₅NH⁺ + OH⁻"},
+    {"name":"RbOH (Rubidium Hidrok.)",  "formula":"RbOH",       "pH":13.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Basa alkali sangat kuat",          "dis":"RbOH → Rb⁺ + OH⁻"},
+    {"name":"CsOH (Sesium Hidroksida)", "formula":"CsOH",       "pH":13.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Basa alkali sangat kuat",          "dis":"CsOH → Cs⁺ + OH⁻"},
+    {"name":"AgOH (Perak Hidroksida)",  "formula":"AgOH",       "pH":9.0,  "type":"basa",   "cat":"Laboratorium",  "desc":"Tidak stabil (menjadi Ag₂O)",      "dis":"AgOH ⇌ Ag⁺ + OH⁻"},
+    {"name":"N₂H₄ (Hidrazin)",          "formula":"N₂H₄",       "pH":10.5, "type":"basa",   "cat":"Industri",      "desc":"Bahan bakar roket antariksa",      "dis":"N₂H₄ + H₂O ⇌ N₂H₅⁺ + OH⁻"},
+    {"name":"(CH₃)₂NH (Dimetilamin)",   "formula":"(CH₃)₂NH",   "pH":10.7, "type":"basa",   "cat":"Industri",      "desc":"Bahan akselerator karet",          "dis":"(CH₃)₂NH + H₂O ⇌ (CH₃)₂NH₂⁺ + OH⁻"},
+    {"name":"(CH₃)₃N (Trimetilamin)",   "formula":"(CH₃)₃N",    "pH":9.8,  "type":"basa",   "cat":"Laboratorium",  "desc":"Gas khas berbau ikan",             "dis":"(CH₃)₃N + H₂O ⇌ (CH₃)₃NH⁺ + OH⁻"},
+    {"name":"C₂H₅NH₂ (Etilamin)",       "formula":"C₂H₅NH₂",    "pH":11.0, "type":"basa",   "cat":"Industri",      "desc":"Bahan intermediet kimia",          "dis":"C₂H₅NH₂ + H₂O ⇌ C₂H₅NH₃⁺ + OH⁻"},
+    {"name":"Ni(OH)₂ (Nikel Hidroks.)", "formula":"Ni(OH)₂",    "pH":8.5,  "type":"basa",   "cat":"Industri",      "desc":"Bahan katoda baterai",             "dis":"Ni(OH)₂ ⇌ Ni²⁺ + 2OH⁻"},
+    {"name":"KCl (Kalium Klorida)",     "formula":"KCl",        "pH":7.0,  "type":"netral", "cat":"Sehari-hari",   "desc":"Bahan pupuk kalium",               "dis":"KCl → K⁺ + Cl⁻"},
+    {"name":"KBr (Kalium Bromida)",     "formula":"KBr",        "pH":7.0,  "type":"netral", "cat":"Farmasi",       "desc":"Obat penenang (historis)",         "dis":"KBr → K⁺ + Br⁻"},
+    {"name":"KI (Kalium Iodida)",       "formula":"KI",         "pH":7.0,  "type":"netral", "cat":"Farmasi",       "desc":"Suplemen anti-radiasi yodium",     "dis":"KI → K⁺ + I⁻"},
+    {"name":"NaBr (Natrium Bromida)",   "formula":"NaBr",       "pH":7.0,  "type":"netral", "cat":"Industri",      "desc":"Bahan campuran fotografi",         "dis":"NaBr → Na⁺ + Br⁻"},
+    {"name":"NaNO₃ (Natrium Nitrat)",   "formula":"NaNO₃",      "pH":7.0,  "type":"netral", "cat":"Industri",      "desc":"Pupuk penyubur (Sendawa Chili)",   "dis":"NaNO₃ → Na⁺ + NO₃⁻"},
+    {"name":"KNO₃ (Kalium Nitrat)",     "formula":"KNO₃",       "pH":7.0,  "type":"netral", "cat":"Industri",      "desc":"Bahan pembuat mesiu",              "dis":"KNO₃ → K⁺ + NO₃⁻"},
+    {"name":"Na₂SO₄ (Natrium Sulfat)",  "formula":"Na₂SO₄",     "pH":7.0,  "type":"netral", "cat":"Industri",      "desc":"Bahan pengisi deterjen",           "dis":"Na₂SO₄ → 2Na⁺ + SO₄²⁻"},
+    {"name":"K₂SO₄ (Kalium Sulfat)",    "formula":"K₂SO₄",      "pH":7.0,  "type":"netral", "cat":"Industri",      "desc":"Pupuk K (Kalium bebas klor)",      "dis":"K₂SO₄ → 2K⁺ + SO₄²⁻"},
+    {"name":"CaCl₂ (Kalsium Klorida)",  "formula":"CaCl₂",      "pH":7.0,  "type":"netral", "cat":"Industri",      "desc":"Zat pengering jalan bersalju",     "dis":"CaCl₂ → Ca²⁺ + 2Cl⁻"},
+    {"name":"BaCl₂ (Barium Klorida)",   "formula":"BaCl₂",      "pH":7.0,  "type":"netral", "cat":"Laboratorium",  "desc":"Reagen uji ion sulfat",            "dis":"BaCl₂ → Ba²⁺ + 2Cl⁻"},
+    {"name":"NH₄Cl (Amonium Klorida)",  "formula":"NH₄Cl",      "pH":5.0,  "type":"asam",   "cat":"Sehari-hari",   "desc":"Pengisi baterai kering (Salmiak)", "dis":"NH₄Cl → NH₄⁺ + Cl⁻"},
+    {"name":"NH₄NO₃ (Amonium Nitrat)",  "formula":"NH₄NO₃",     "pH":5.5,  "type":"asam",   "cat":"Industri",      "desc":"Bahan peledak dan pupuk",          "dis":"NH₄NO₃ → NH₄⁺ + NO₃⁻"},
+    {"name":"(NH₄)₂SO₄ (Amonium Sulf.)","formula":"(NH₄)₂SO₄",  "pH":5.5,  "type":"asam",   "cat":"Industri",      "desc":"Pupuk nitrogen ZA",                "dis":"(NH₄)₂SO₄ → 2NH₄⁺ + SO₄²⁻"},
+    {"name":"AlCl₃ (Aluminium Klorida)","formula":"AlCl₃",      "pH":3.0,  "type":"asam",   "cat":"Industri",      "desc":"Katalis reaksi Friedel-Crafts",    "dis":"AlCl₃ → Al³⁺ + 3Cl⁻"},
+    {"name":"FeCl₃ (Besi(III) Klorida)","formula":"FeCl₃",      "pH":2.0,  "type":"asam",   "cat":"Laboratorium",  "desc":"Koagulan penjernih limbah air",    "dis":"FeCl₃ → Fe³⁺ + 3Cl⁻"},
+    {"name":"ZnCl₂ (Seng Klorida)",     "formula":"ZnCl₂",      "pH":4.0,  "type":"asam",   "cat":"Industri",      "desc":"Bahan pengawet kayu",              "dis":"ZnCl₂ → Zn²⁺ + 2Cl⁻"},
+    {"name":"CuCl₂ (Tembaga Klorida)",  "formula":"CuCl₂",      "pH":4.0,  "type":"asam",   "cat":"Industri",      "desc":"Pewarna kembang api piroteknik",   "dis":"CuCl₂ → Cu²⁺ + 2Cl⁻"},
+    {"name":"MgSO₄ (Magnesium Sulfat)", "formula":"MgSO₄",      "pH":6.0,  "type":"asam",   "cat":"Farmasi",       "desc":"Garam pereda nyeri (Garam Epsom)", "dis":"MgSO₄ → Mg²⁺ + SO₄²⁻"},
+    {"name":"NaHSO₄ (Natrium Bisulfat)","formula":"NaHSO₄",     "pH":1.5,  "type":"asam",   "cat":"Laboratorium",  "desc":"Garam bersifat asam kuat",         "dis":"NaHSO₄ → Na⁺ + H⁺ + SO₄²⁻"},
+    {"name":"NaH₂PO₄ (Natrium Dihid. F)","formula":"NaH₂PO₄",   "pH":4.5,  "type":"asam",   "cat":"Analisis",      "desc":"Komponen larutan buffer asam",     "dis":"NaH₂PO₄ → Na⁺ + H₂PO₄⁻"},
+    {"name":"K₂CO₃ (Kalium Karbonat)",  "formula":"K₂CO₃",      "pH":11.0, "type":"basa",   "cat":"Industri",      "desc":"Bahan baku pembuatan kaca",        "dis":"K₂CO₃ → 2K⁺ + CO₃²⁻"},
+    {"name":"CH₃COONa (Natrium Asetat)","formula":"CH₃COONa",   "pH":9.0,  "type":"basa",   "cat":"Analisis",      "desc":"Komponen buffer penghangat",       "dis":"CH₃COONa → Na⁺ + CH₃COO⁻"},
+    {"name":"CH₃COOK (Kalium Asetat)",  "formula":"CH₃COOK",    "pH":9.0,  "type":"basa",   "cat":"Industri",      "desc":"Bahan aktif pemadam api kelas K",  "dis":"CH₃COOK → K⁺ + CH₃COO⁻"},
+    {"name":"NaCN (Natrium Sianida)",   "formula":"NaCN",       "pH":11.0, "type":"basa",   "cat":"Industri",      "desc":"Pelarut ekstraksi tambang emas",   "dis":"NaCN → Na⁺ + CN⁻"},
+    {"name":"KCN (Kalium Sianida)",     "formula":"KCN",        "pH":11.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Reagen kimia toksik",              "dis":"KCN → K⁺ + CN⁻"},
+    {"name":"NaF (Natrium Fluorida)",   "formula":"NaF",        "pH":8.0,  "type":"basa",   "cat":"Sehari-hari",   "desc":"Penguat email di pasta gigi",      "dis":"NaF → Na⁺ + F⁻"},
+    {"name":"KF (Kalium Fluorida)",     "formula":"KF",         "pH":8.0,  "type":"basa",   "cat":"Industri",      "desc":"Fluks dalam peleburan metalurgi",  "dis":"KF → K⁺ + F⁻"},
+    {"name":"Na₃PO₄ (Trinatrium Fosf.)","formula":"Na₃PO₄",     "pH":12.0, "type":"basa",   "cat":"Industri",      "desc":"Bahan aktif agen pembersih",       "dis":"Na₃PO₄ → 3Na⁺ + PO₄³⁻"},
+    {"name":"K₃PO₄ (Trikalium Fosfat)", "formula":"K₃PO₄",      "pH":12.0, "type":"basa",   "cat":"Industri",      "desc":"Zat aditif makanan dan emulsifier","dis":"K₃PO₄ → 3K⁺ + PO₄³⁻"},
+    {"name":"Na₂HPO₄ (Dinatrium Hid. F)","formula":"Na₂HPO₄",   "pH":9.0,  "type":"basa",   "cat":"Analisis",      "desc":"Komponen pembuat buffer",          "dis":"Na₂HPO₄ → 2Na⁺ + HPO₄²⁻"},
+    {"name":"Na₂SO₃ (Natrium Sulfit)",  "formula":"Na₂SO₃",     "pH":9.0,  "type":"basa",   "cat":"Industri",      "desc":"Pengawet pewarna makanan",         "dis":"Na₂SO₃ → 2Na⁺ + SO₃²⁻"},
+    {"name":"NaNO₂ (Natrium Nitrit)",   "formula":"NaNO₂",      "pH":9.0,  "type":"basa",   "cat":"Industri",      "desc":"Pengawet olahan daging",           "dis":"NaNO₂ → Na⁺ + NO₂⁻"},
+    {"name":"Na₂S (Natrium Sulfida)",   "formula":"Na₂S",       "pH":12.0, "type":"basa",   "cat":"Industri",      "desc":"Bahan penyamakan kulit hewan",     "dis":"Na₂S → 2Na⁺ + S²⁻"},
+    {"name":"K₂S (Kalium Sulfida)",     "formula":"K₂S",        "pH":12.0, "type":"basa",   "cat":"Laboratorium",  "desc":"Reagen penguji kation logam",      "dis":"K₂S → 2K⁺ + S²⁻"},
+    {"name":"NaClO (Nat. Hipoklorit)",  "formula":"NaClO",      "pH":11.0, "type":"basa",   "cat":"Sehari-hari",   "desc":"Pemutih pakaian (Bayclin)",        "dis":"NaClO → Na⁺ + ClO⁻"},
+    {"name":"K₂Cr₂O₇ (Kalium Dikromat)","formula":"K₂Cr₂O₇",    "pH":4.0,  "type":"asam",   "cat":"Analisis",      "desc":"Oksidator titrasi dikromatometri", "dis":"K₂Cr₂O₇ → 2K⁺ + Cr₂O₇²⁻"},
+    {"name":"Na₂CrO₄ (Natrium Kromat)", "formula":"Na₂CrO₄",    "pH":9.0,  "type":"basa",   "cat":"Laboratorium",  "desc":"Indikator titrasi Mohr",           "dis":"Na₂CrO₄ → 2Na⁺ + CrO₄²⁻"},
+    {"name":"KSCN (Kalium Tiosianat)",  "formula":"KSCN",       "pH":7.0,  "type":"netral", "cat":"Analisis",      "desc":"Titrasi presipitasi Volhard",      "dis":"KSCN → K⁺ + SCN⁻"},
+    {"name":"K₃[Fe(CN)₆] (Kal. Ferisi.)","formula":"K₃[Fe(CN)₆]","pH":7.0, "type":"netral", "cat":"Laboratorium",  "desc":"Reagen biru Prusia analitik",      "dis":"K₃[Fe(CN)₆] → 3K⁺ + [Fe(CN)₆]³⁻"},
+    {"name":"Na₂S₂O₃ (Nat. Tiosulfat)", "formula":"Na₂S₂O₃",    "pH":7.0,  "type":"netral", "cat":"Iodometri",     "desc":"Titran iodometri (Hiposulfit)",    "dis":"Na₂S₂O₃ → 2Na⁺ + S₂O₃²⁻"},
 ]
 
-selected_menu = st.sidebar.radio(
-    "Pilih Menu:", 
-    menu_options,
-    label_visibility="collapsed"
-)
+# ─────────────────────────────────────────────────────────────────────
+# DATA: DATABASE LARUTAN KALKULATOR pH (60 Jenis Larutan)
+# ─────────────────────────────────────────────────────────────────────
+DATABASE_LARUTAN = {
+    # --- ASAM KUAT ---
+    "Asam Klorida (HCl) - Asam Kuat (Valensi 1)": {"jenis": "asam_kuat", "valensi": 1},
+    "Asam Sulfat (H₂SO₄) - Asam Kuat (Valensi 2)": {"jenis": "asam_kuat", "valensi": 2},
+    "Asam Nitrat (HNO₃) - Asam Kuat (Valensi 1)": {"jenis": "asam_kuat", "valensi": 1},
+    "Asam Bromida (HBr) - Asam Kuat (Valensi 1)": {"jenis": "asam_kuat", "valensi": 1},
+    "Asam Iodida (HI) - Asam Kuat (Valensi 1)": {"jenis": "asam_kuat", "valensi": 1},
+    "Asam Perklorat (HClO₄) - Asam Kuat (Valensi 1)": {"jenis": "asam_kuat", "valensi": 1},
+    "Asam Klorat (HClO₃) - Asam Kuat (Valensi 1)": {"jenis": "asam_kuat", "valensi": 1},
 
-if selected_menu == "🏠 Dashboard":
-    st.title("🧪Indikator asam dan basa")
+    # --- BASA KUAT ---
+    "Natrium Hidroksida (NaOH) - Basa Kuat (Valensi 1)": {"jenis": "basa_kuat", "valensi": 1},
+    "Kalium Hidroksida (KOH) - Basa Kuat (Valensi 1)": {"jenis": "basa_kuat", "valensi": 1},
+    "Litium Hidroksida (LiOH) - Basa Kuat (Valensi 1)": {"jenis": "basa_kuat", "valensi": 1},
+    "Rubidium Hidroksida (RbOH) - Basa Kuat (Valensi 1)": {"jenis": "basa_kuat", "valensi": 1},
+    "Sesium Hidroksida (CsOH) - Basa Kuat (Valensi 1)": {"jenis": "basa_kuat", "valensi": 1},
+    "Barium Hidroksida (Ba(OH)₂) - Basa Kuat (Valensi 2)": {"jenis": "basa_kuat", "valensi": 2},
+    "Kalsium Hidroksida (Ca(OH)₂) - Basa Kuat (Valensi 2)": {"jenis": "basa_kuat", "valensi": 2},
+    "Stronsium Hidroksida (Sr(OH)₂) - Basa Kuat (Valensi 2)": {"jenis": "basa_kuat", "valensi": 2},
 
-elif selected_menu == "✅ To-Do List":
-    st.title("🧪Indikator asam dan basa")
+    # --- ASAM LEMAH ---
+    "Asam Asetat (CH₃COOH) - Asam Lemah Ka=1.8×10⁻⁵": {"jenis": "asam_lemah", "K": 1.8e-5},
+    "Asam Format (HCOOH) - Asam Lemah Ka=1.8×10⁻⁴": {"jenis": "asam_lemah", "K": 1.8e-4},
+    "Asam Sianida (HCN) - Asam Lemah Ka=4.9×10⁻¹⁰": {"jenis": "asam_lemah", "K": 4.9e-10},
+    "Asam Fluorida (HF) - Asam Lemah Ka=6.8×10⁻⁴": {"jenis": "asam_lemah", "K": 6.8e-4},
+    "Asam Nitrit (HNO₂) - Asam Lemah Ka=4.5×10⁻⁴": {"jenis": "asam_lemah", "K": 4.5e-4},
+    "Asam Hipoklorit (HClO) - Asam Lemah Ka=2.9×10⁻⁸": {"jenis": "asam_lemah", "K": 2.9e-8},
+    "Asam Klorit (HClO₂) - Asam Lemah Ka=1.1×10⁻²": {"jenis": "asam_lemah", "K": 1.1e-2},
+    "Asam Karbonat (H₂CO₃) - Asam Lemah Ka=4.3×10⁻⁷": {"jenis": "asam_lemah", "K": 4.3e-7},
+    "Asam Sulfit (H₂SO₃) - Asam Lemah Ka=1.5×10⁻²": {"jenis": "asam_lemah", "K": 1.5e-2},
+    "Asam Sulfida (H₂S) - Asam Lemah Ka=8.9×10⁻⁸": {"jenis": "asam_lemah", "K": 8.9e-8},
+    "Asam Fosfat (H₃PO₄) - Asam Lemah Ka=7.5×10⁻³": {"jenis": "asam_lemah", "K": 7.5e-3},
+    "Asam Benzoat (C₆H₅COOH) - Asam Lemah Ka=6.5×10⁻⁵": {"jenis": "asam_lemah", "K": 6.5e-5},
+    "Fenol (C₆H₅OH) - Asam Lemah Ka=1.0×10⁻¹⁰": {"jenis": "asam_lemah", "K": 1.0e-10},
+    "Asam Propanoat (C₂H₅COOH) - Asam Lemah Ka=1.3×10⁻⁵": {"jenis": "asam_lemah", "K": 1.3e-5},
+    "Asam Butanoat (C₃H₇COOH) - Asam Lemah Ka=1.5×10⁻⁵": {"jenis": "asam_lemah", "K": 1.5e-5},
+    "Asam Laktat (C₃H₆O₃) - Asam Lemah Ka=1.4×10⁻⁴": {"jenis": "asam_lemah", "K": 1.4e-4},
+    "Asam Askorbat / Vit C (C₆H₈O₆) - Asam Lemah Ka=8.0×10⁻⁵": {"jenis": "asam_lemah", "K": 8.0e-5},
+    "Asam Tartarat (C₄H₆O₆) - Asam Lemah Ka=1.0×10⁻³": {"jenis": "asam_lemah", "K": 1.0e-3},
+    "Asam Sitrat (C₆H₈O₇) - Asam Lemah Ka=7.4×10⁻⁴": {"jenis": "asam_lemah", "K": 7.4e-4},
+    "Asam Oksalat (H₂C₂O₄) - Asam Lemah Ka=5.9×10⁻²": {"jenis": "asam_lemah", "K": 5.9e-2},
+    "Asam Ftalat (C₈H₆O₄) - Asam Lemah Ka=1.1×10⁻³": {"jenis": "asam_lemah", "K": 1.1e-3},
+    "Asam Salisilat (C₇H₆O₃) - Asam Lemah Ka=1.0×10⁻³": {"jenis": "asam_lemah", "K": 1.0e-3},
+    "Asam Borat (H₃BO₃) - Asam Lemah Ka=5.8×10⁻¹⁰": {"jenis": "asam_lemah", "K": 5.8e-10},
+    "Asam Kloroasetat (CH₂ClCOOH) - Asam Lemah Ka=1.4×10⁻³": {"jenis": "asam_lemah", "K": 1.4e-3},
+    "Asam Dikloroasetat (CHCl₂COOH) - Asam Lemah Ka=5.0×10⁻²": {"jenis": "asam_lemah", "K": 5.0e-2},
+    "Asam Bromoasetat (CH₂BrCOOH) - Asam Lemah Ka=1.3×10⁻³": {"jenis": "asam_lemah", "K": 1.3e-3},
+    "Asam Arsenat (H₃AsO₄) - Asam Lemah Ka=5.5×10⁻³": {"jenis": "asam_lemah", "K": 5.5e-3},
+    "Asam Arsenit (H₃AsO₃) - Asam Lemah Ka=5.1×10⁻¹⁰": {"jenis": "asam_lemah", "K": 5.1e-10},
+    "Asam Sianat (HOCN) - Asam Lemah Ka=3.5×10⁻⁴": {"jenis": "asam_lemah", "K": 3.5e-4},
+    "Asam Urat (C₅H₄N₄O₃) - Asam Lemah Ka=4.0×10⁻⁶": {"jenis": "asam_lemah", "K": 4.0e-6},
 
-elif selected_menu == "⏱️ Timer Belajar":
-    st.title("🧪Indikator asam dan basa")
+    # --- BASA LEMAH ---
+    "Amonia (NH₃) - Basa Lemah Kb=1.8×10⁻⁵": {"jenis": "basa_lemah", "K": 1.8e-5},
+    "Metilamin (CH₃NH₂) - Basa Lemah Kb=4.4×10⁻⁴": {"jenis": "basa_lemah", "K": 4.4e-4},
+    "Etilamin (C₂H₅NH₂) - Basa Lemah Kb=5.6×10⁻⁴": {"jenis": "basa_lemah", "K": 5.6e-4},
+    "Propilamin (C₃H₇NH₂) - Basa Lemah Kb=3.5×10⁻⁴": {"jenis": "basa_lemah", "K": 3.5e-4},
+    "Butilamin (C₄H₉NH₂) - Basa Lemah Kb=4.0×10⁻⁴": {"jenis": "basa_lemah", "K": 4.0e-4},
+    "Dimetilamin ((CH₃)₂NH) - Basa Lemah Kb=5.4×10⁻⁴": {"jenis": "basa_lemah", "K": 5.4e-4},
+    "Dietilamin ((C₂H₅)₂NH) - Basa Lemah Kb=8.6×10⁻⁴": {"jenis": "basa_lemah", "K": 8.6e-4},
+    "Trimetilamin ((CH₃)₃N) - Basa Lemah Kb=6.3×10⁻⁵": {"jenis": "basa_lemah", "K": 6.3e-5},
+    "Trietilamin ((C₂H₅)₃N) - Basa Lemah Kb=5.2×10⁻⁴": {"jenis": "basa_lemah", "K": 5.2e-4},
+    "Anilin (C₆H₅NH₂) - Basa Lemah Kb=3.8×10⁻¹⁰": {"jenis": "basa_lemah", "K": 3.8e-10},
+    "Piridin (C₅H₅N) - Basa Lemah Kb=1.7×10⁻⁹": {"jenis": "basa_lemah", "K": 1.7e-9},
+    "Hidrazin (N₂H₄) - Basa Lemah Kb=1.3×10⁻⁶": {"jenis": "basa_lemah", "K": 1.3e-6},
+    "Hidroksilamin (NH₂OH) - Basa Lemah Kb=1.1×10⁻⁸": {"jenis": "basa_lemah", "K": 1.1e-8},
+    "Benzilamin (C₆H₅CH₂NH₂) - Basa Lemah Kb=2.1×10⁻⁵": {"jenis": "basa_lemah", "K": 2.1e-5},
+    "Etilendiamin (C₂H₈N₂) - Basa Lemah Kb=8.5×10⁻⁵": {"jenis": "basa_lemah", "K": 8.5e-5},
+}
 
-elif selected_menu == "🎵 Musik Fokus":
-    st.title("🧪Indikator asam dan basa")
+MUSIK = {
+    "Just the Way You Are": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.12.27.mpeg",
+    "Kembali Untukku": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.14.44.mpeg",
+    "🌙 Piano Relaksasi": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    "⚡ Deep Focus": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    "☕ Coffee Shop": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+}
 
-elif selected_menu == "🧪Indikator asam dan basa":
-    st.title("🧪Indikator asam dan basa")
+# ─────────────────────────────────────────────────────────────────────
+# FUNGSI UTILITAS
+# ─────────────────────────────────────────────────────────────────────
+def warna_indikator(ph: float, ind: dict) -> str:
+    lo, hi = ind["range"]
+    if ind["name"] == "Indikator Universal":
+        if ph < 3:   return "#dc2626"
+        elif ph < 5: return "#f97316"
+        elif ph < 6.5: return "#eab308"
+        elif ph < 7.5: return "#16a34a"
+        elif ph < 9:   return "#0284c7"
+        elif ph < 11:  return "#1d4ed8"
+        else:          return "#581c87"
+    if ph < lo:  return ind["low"]
+    if ph > hi:  return ind["high"]
+    return ind["mid"]
 
-# ============================================================
-# 📝 FUNGSI-FUNGSI TO-DO LIST
-# ============================================================
+def label_indikator(ph: float, ind: dict) -> str:
+    lo, hi = ind["range"]
+    if ph < lo:  return ind["low_lbl"]
+    if ph > hi:  return ind["high_lbl"]
+    return ind["mid_lbl"]
 
-def add_task(task_name):
-    if task_name:
-        st.session_state.tasks.append({
-            "name": task_name,
-            "done": False,
-            "timestamp": datetime.now().strftime("%H:%M")
-        })
+def klasifikasi(ph: float):
+    if ph < 7: return "ASAM", "#ef4444"
+    if ph > 7: return "BASA", "#3b82f6"
+    return "NETRAL", "#22c55e"
 
-def toggle_task(index):
-    st.session_state.tasks[index]["done"] = not st.session_state.tasks[index]["done"]
+def hitung_ph(data_larutan: dict, konsentrasi: float) -> tuple[float, str]:
+    c = max(konsentrasi, 1e-15)
+    jenis = data_larutan["jenis"]
 
-def delete_task(index):
-    st.session_state.tasks.pop(index)
-
-# ============================================================
-# 📌 KONTEN UTAMA PER MENU
-# ============================================================
-
-# ═══════════════════════════════════════════════════════════
-# 1️⃣ DASHBOARD UTAMA
-# ═══════════════════════════════════════════════════════════
-selected_page = st.sidebar.radio(
-    "Pilih Menu",
-    ["🏠 Dashboard", "📚 Teori", "🧪 Simulasi"]
-)
-if selected_page == "🏠 Dashboard":
-    st.markdown("# 📚 Dashboard Belajar")
-    st.markdown("Selamat datang! Pilih menu di sidebar untuk memulai.")
-    
-    # Metric Cards
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("📝 Total Tugas", len(st.session_state.tasks))
-    with col2:
-        tugas_belum = sum(1 for t in st.session_state.tasks if not t["done"])
-        st.metric("⏳ Tugas Tertunda", tugas_belum)
-    with col3:
-        tugas_selesai = sum(1 for t in st.session_state.tasks if t["done"])
-        st.metric("✅ Tugas Selesai", tugas_selesai)
-    with col4:
-        st.metric("🎨 Tema Saat Ini", st.session_state.theme)
-    
-    st.markdown("---")
-    
-    # Informasi
-    if st.session_state.theme == "White":
-        st.success("💡 Tip: Gunakan teknik Pomodoro (25 menit belajar, 5 menit istirahat)!")
+    if jenis == "asam_kuat":
+        valensi = data_larutan["valensi"]
+        H = valensi * c
+        ph = -math.log10(H)
+        rumus = f"[H⁺] = Valensi × C <br> [H⁺] = {valensi} × {c:.4f} = {H:.4e} <br> pH = −log[H⁺] = **{ph:.2f}**"
+        
+    elif jenis == "basa_kuat":
+        valensi = data_larutan["valensi"]
+        OH = valensi * c
+        poh = -math.log10(OH)
+        ph = 14 - poh
+        rumus = f"[OH⁻] = Valensi × C = {OH:.4e} <br> pOH = −log[OH⁻] = {poh:.2f} <br> pH = 14 − {poh:.2f} = **{ph:.2f}**"
+        
+    elif jenis == "asam_lemah":
+        Ka = data_larutan["K"]
+        H = math.sqrt(Ka * c)
+        ph = -math.log10(H)
+        rumus = f"[H⁺] = √(Ka × C) <br> [H⁺] = √({Ka:.1e} × {c:.4f}) = {H:.2e} <br> pH = −log[H⁺] = **{ph:.2f}**"
+        
+    elif jenis == "basa_lemah":
+        Kb = data_larutan["K"]
+        OH = math.sqrt(Kb * c)
+        poh = -math.log10(OH)
+        ph = 14 - poh
+        rumus = f"[OH⁻] = √(Kb × C) <br> [OH⁻] = √({Kb:.1e} × {c:.4f}) = {OH:.2e} <br> pOH = {poh:.2f} <br> pH = 14 − {poh:.2f} = **{ph:.2f}**"
+        
     else:
-        st.info("💡 Tip: Gunakan teknik Pomodoro (25 menit belajar, 5 menit istirahat) untuk hasil maksimal!")
+        ph = 7.0
+        rumus = "pH = 7.00 (larutan netral)"
+        
+    return round(max(0.0, min(14.0, ph)), 2), rumus
 
-# ═══════════════════════════════════════════════════════════
-# 2️⃣ TO-DO LIST
-# ═══════════════════════════════════════════════════════════
+def add_task(name):
+    if name.strip():
+        st.session_state.tasks.append({"name": name.strip(), "done": False, "ts": datetime.now().strftime("%H:%M")})
+
+def toggle_task(i):
+    st.session_state.tasks[i]["done"] = not st.session_state.tasks[i]["done"]
+
+def del_task(i):
+    st.session_state.tasks.pop(i)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# CSS TEMA
+# ─────────────────────────────────────────────────────────────────────
+def apply_theme():
+    is_dark = st.session_state.theme == "Dark"
+    bg     = "#0f0f1a" if is_dark else "#f0f4f8"
+    sbg    = "#1a1a2e" if is_dark else "#e2e8f0"
+    txt    = "#e2e8f0" if is_dark else "#1e293b"
+    card   = "rgba(255,255,255,0.05)" if is_dark else "rgba(0,0,0,0.04)"
+    border = "rgba(255,255,255,0.1)"  if is_dark else "rgba(0,0,0,0.1)"
+    inp    = "#16213e" if is_dark else "#ffffff"
+    btn    = "#7c3aed" if is_dark else "#3b82f6"
+
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap');
+
+    html, body, [class*="css"] {{ font-family: 'Outfit', sans-serif; }}
+    .stApp {{ background-color: {bg}; }}
+    h1,h2,h3,h4,h5,h6,p,label,span,div {{ color: {txt} !important; }}
+    section[data-testid="stSidebar"] {{ background-color: {sbg}; }}
+    .stTextInput>div>div>input, .stNumberInput>div>div>input {{
+        background-color: {inp} !important; color: {txt} !important;
+        border: 1px solid {border} !important; border-radius: 8px !important;
+    }}
+    .stSelectbox>div>div>div {{ background-color: {inp} !important; color: {txt} !important; }}
+    .stButton>button {{
+        background: linear-gradient(135deg, {btn}, #06b6d4) !important;
+        color: white !important; border: none !important; border-radius: 10px !important;
+        font-family: 'Outfit', sans-serif !important; font-weight: 600 !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
+    }}
+    .stButton>button:hover {{ transform: translateY(-2px) !important; box-shadow: 0 6px 20px rgba(124,58,237,0.4) !important; }}
+    .stProgress>div>div>div {{ background: linear-gradient(90deg,{btn},#06b6d4) !important; }}
+    .stAlert {{ background-color: {card} !important; color: {txt} !important; border-radius: 10px !important; }}
+    .streamlit-expanderHeader {{ background-color: {card} !important; border-radius: 10px !important; }}
+    hr {{ border-color: {border} !important; }}
+
+    /* Custom card class */
+    .ccard {{
+        background: {card}; border: 1px solid {border};
+        border-radius: 16px; padding: 1.2rem 1.5rem; margin-bottom: 0.8rem;
+    }}
+    .mono {{ font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }}
+    .badge {{
+        display: inline-block; padding: 3px 12px; border-radius: 999px;
+        font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# SIDEBAR
+# ─────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("## ⚙️ Pengaturan")
+    tema = st.radio("🎨 Tema:", ["Dark", "Light"],
+                    index=0 if st.session_state.theme == "Dark" else 1,
+                    horizontal=True)
+    st.session_state.theme = tema
+    apply_theme()   # terapkan tema SETELAH diset
+
+    st.markdown("---")
+    st.markdown("## 📚 Menu")
+    MENUS = ["🏠 Dashboard", "✅ To-Do List", "⏱️ Timer Belajar",
+             "🎵 Musik Fokus", "🧪 Simulasi Indikator", "🧮 Kalkulator pH"]
+    selected_menu = st.radio("", MENUS, label_visibility="collapsed")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  1. DASHBOARD
+# ─────────────────────────────────────────────────────────────────────
+if selected_menu == "🏠 Dashboard":
+    st.markdown("# 📚 Dashboard Belajar Kimia")
+    st.markdown("Selamat datang! Pilih menu di sidebar untuk memulai sesi belajar.")
+
+    c1, c2, c3, c4 = st.columns(4)
+    total   = len(st.session_state.tasks)
+    selesai = sum(1 for t in st.session_state.tasks if t["done"])
+    pending = total - selesai
+    persen  = int(selesai / total * 100) if total else 0
+
+    c1.metric("📝 Total Tugas",   total)
+    c2.metric("⏳ Tertunda",       pending)
+    c3.metric("✅ Selesai",        selesai)
+    c4.metric("📊 Progress",       f"{persen}%")
+
+    if total:
+        st.progress(persen / 100)
+
+    st.markdown("---")
+    st.info("💡 **Tip Pomodoro:** 25 menit belajar fokus → 5 menit istirahat. Ulangi 4 kali, lalu istirahat 15 menit.")
+
+    st.markdown("### 🗺️ Menu yang Tersedia")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("""
+        <div class="ccard">
+          <b>✅ To-Do List</b><br><span class="mono">Catat & kelola tugas harian mu</span>
+        </div>
+        <div class="ccard">
+          <b>⏱️ Timer Belajar</b><br><span class="mono">Pomodoro timer interaktif</span>
+        </div>
+        <div class="ccard">
+          <b>🎵 Musik Fokus</b><br><span class="mono">Putar musik belajar lo-fi</span>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_b:
+        st.markdown("""
+        <div class="ccard">
+          <b>🧪 Simulasi Indikator</b><br><span class="mono">Lihat perubahan warna larutan</span>
+        </div>
+        <div class="ccard">
+          <b>🧮 Kalkulator pH</b><br><span class="mono">Hitung pH dari konsentrasi</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  2. TO-DO LIST
+# ─────────────────────────────────────────────────────────────────────
 elif selected_menu == "✅ To-Do List":
-    st.markdown("# 📝 To-Do List Harian")
-    
-    # Input tugas
-    col_input1, col_input2 = st.columns([4, 1])
-    with col_input1:
-        new_task = st.text_input(
-            "Tambah tugas baru:", 
-            placeholder="Contoh: Mengerjakan PR Matematika"
-        )
-    with col_input2:
-        st.write("")  # Spasi
+    st.markdown("# ✅ To-Do List Harian")
+
+    ci1, ci2 = st.columns([5, 1])
+    with ci1:
+        new_task = st.text_input("Tambah tugas:", placeholder="Contoh: Baca bab 3 Kimia Kelas XI")
+    with ci2:
+        st.write("")
         if st.button("➕ Tambah", type="primary"):
             add_task(new_task)
             st.rerun()
-    
+
     st.markdown("---")
-    
-    # Tampilkan daftar tugas
-    if len(st.session_state.tasks) == 0:
-        st.warning("📭 Daftar tugas kosong. Tambahkan tugas di atas ya!")
+    if not st.session_state.tasks:
+        st.warning("📭 Belum ada tugas. Tambahkan di atas!")
     else:
+        total_t = len(st.session_state.tasks)
+        done_t  = sum(1 for t in st.session_state.tasks if t["done"])
+        st.progress(done_t / total_t, text=f"Progress: {done_t}/{total_t} selesai")
+        st.markdown("")
+
         for i, task in enumerate(st.session_state.tasks):
-            col1, col2, col3 = st.columns([1, 6, 1])
-            
-            with col1:
-                st.checkbox(
-                    "", 
-                    value=task["done"], 
-                    key=f"check_{i}", 
-                    on_change=toggle_task, 
-                    args=(i,)
-                )
-            
-            with col2:
-                if task["done"]:
-                    st.markdown(f"~~{task['name']}~~ ✅")
-                else:
-                    st.markdown(f"**{task['name']}**")
-                st.caption(f"Jam: {task['timestamp']}")
-            
-            with col3:
+            cc1, cc2, cc3 = st.columns([0.5, 7, 1])
+            with cc1:
+                st.checkbox("", value=task["done"], key=f"chk_{i}", on_change=toggle_task, args=(i,))
+            with cc2:
+                style = "~~" if task["done"] else "**"
+                end   = "~~ ✅" if task["done"] else "**"
+                st.markdown(f"{style}{task['name']}{end}")
+                st.caption(f"Ditambahkan pukul {task['ts']}")
+            with cc3:
                 if st.button("🗑️", key=f"del_{i}"):
-                    delete_task(i)
+                    del_task(i)
                     st.rerun()
-            
             st.markdown("---")
 
-# ═══════════════════════════════════════════════════════════════════
-# 3️⃣ TIMER BELAJAR
-# ═══════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  3. TIMER BELAJAR
+# ─────────────────────────────────────────────────────────────────────
 elif selected_menu == "⏱️ Timer Belajar":
-    st.markdown("# ⏱️ Timer Belajar (Pomodoro)")
-    
-    col_timer1, col_timer2 = st.columns([1, 1])
-    
-    with col_timer1:
-        st.markdown("### ⚙️ Pengaturan Waktu")
-        mode = st.selectbox(
-            "Pilih Mode:", 
-            [
-                "25 menit (Belajar)", 
-                "5 menit (Istirahat)", 
-                "15 menit (Istirahat Panjang)"
-            ]
-        )
-        
-        if mode == "25 menit (Belajar)":
-            default_time = 25 * 60
-        elif mode == "5 menit (Istirahat)":
-            default_time = 5 * 60
-        else:
-            default_time = 15 * 60
-        
+    st.markdown("# ⏱️ Timer Belajar — Teknik Pomodoro")
+
+    ct1, ct2 = st.columns(2)
+    with ct1:
+        st.markdown("### ⚙️ Pengaturan")
+        mode = st.selectbox("Mode:", ["🍅 25 menit – Belajar", "☕ 5 menit – Istirahat", "🛌 15 menit – Istirahat Panjang"])
+        default_map = {"🍅 25 menit – Belajar": 25*60, "☕ 5 menit – Istirahat": 5*60, "🛌 15 menit – Istirahat Panjang": 15*60}
+        default_time = default_map[mode]
+
         if st.button("🔄 Reset Timer"):
             st.session_state.time_left = default_time
             st.session_state.timer_running = False
             st.rerun()
-    
-    with col_timer2:
-        # Tampilan Timer Besar
-        menit = st.session_state.time_left // 60
-        detik = st.session_state.time_left % 60
-        waktu_formatted = f"{menit:02d}:{detik:02d}"
-        
-        # Indikator warna
-        if menit <= 5:
-            warna = "🔴"
-            status_text = "Waktunya Istirahat!"
-        elif menit <= 10:
-            warna = "🟡"
-            status_text = "Hampir Istirahat"
-        else:
-            warna = "🟢"
-            status_text = "Fokus Penuh"
-        
-        # Card timer
-        if st.session_state.theme == "White":
-            bg_color = "#2d2d2d"
-            text_color = "#ffffff"
-        else:
-            bg_color = "#ffffff"
-            text_color = "#1a1a1a"
-        
-        st.markdown(f"""
-        <div style='text-align: center; padding: 50px; background: {bg_color}; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);'>
-            <h1 style='font-size: 100px; margin: 0; color: {text_color};'>{waktu_formatted}</h1>
-            <p style='font-size: 24px; color: {text_color};'>{warna} {status_text}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Kontrol
-        col_k1, col_k2 = st.columns(2)
-        with col_k1:
-            if st.button("▶️ MULAI", type="primary"):
+
+        st.markdown("---")
+        ck1, ck2 = st.columns(2)
+        with ck1:
+            if st.button("▶️ Mulai", type="primary"):
+                st.session_state.time_left = st.session_state.time_left or default_time
                 st.session_state.timer_running = True
                 st.rerun()
-        with col_k2:
-            if st.button("⏹️ BERHENTI"):
+        with ck2:
+            if st.button("⏹️ Stop"):
                 st.session_state.timer_running = False
                 st.rerun()
-    
-    # Update timer setiap detik
+
+    with ct2:
+        menit = st.session_state.time_left // 60
+        detik = st.session_state.time_left % 60
+        wkt = f"{menit:02d}:{detik:02d}"
+
+        if menit <= 5:   clr, sts = "#ef4444", "🔴 Hampir Selesai!"
+        elif menit <= 10: clr, sts = "#f59e0b", "🟡 Tetap Fokus"
+        else:             clr, sts = "#22c55e", "🟢 Fokus Penuh"
+
+        st.markdown(f"""
+        <div style="text-align:center; padding:40px 20px; background:rgba(0,0,0,0.2);
+             border-radius:24px; border:2px solid {clr}33;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:5rem;
+               font-weight:700; color:{clr}; line-height:1; text-shadow:0 0 30px {clr}88;">{wkt}</div>
+          <div style="font-size:1.1rem; margin-top:1rem; font-weight:600;">{sts}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        pct = st.session_state.time_left / default_time
+        st.progress(max(0.0, min(1.0, pct)))
+
     if st.session_state.timer_running:
         if st.session_state.time_left > 0:
             time.sleep(1)
@@ -449,285 +527,421 @@ elif selected_menu == "⏱️ Timer Belajar":
         else:
             st.session_state.timer_running = False
             st.balloons()
-            st.success("⏰ Waktu belajar selesai! Saatnya istirahat.")
+            st.success("⏰ Waktu selesai! Saatnya istirahat 🎉")
 
-# ═══════════════════════════════════════════════════════════
-# 4️⃣ MUSIK FOKUS
-# ═══════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  4. MUSIK FOKUS
+# ─────────────────────────────────────────────────────────────────────
 elif selected_menu == "🎵 Musik Fokus":
     st.markdown("# 🎵 Musik Fokus")
-    
-    st.markdown("""
-    <div style='text-align: center; padding: 30px; border-radius: 15px;'>
-        <h3>🎧 Pemutar Musik</h3>
-        <p>Pilih musik favorit untuk fokus belajar:</p>
-    </div>
-    """)
-    
-    # Pilihan musik
-    musik_options = {
-        "Just the way you are": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.12.27.mpeg",
-        "Kembali untukku": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.14.44.mpeg",
-        "🌙 Piano Relaksasi": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-        "⚡ Deep Focus Techno": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-        "☕ Coffee Shop Vibes": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3"
-    }
-    
-    selected_music = st.selectbox("Pilih Trek:", list(musik_options.keys()))
-    
-    # Audio player
-    st.audio(musik_options[selected_music], format='audio/mp3', start_time=0)
-    
+    st.markdown("Pilih musik latar untuk menemani sesi belajarmu.")
+
+    pilihan = st.selectbox("🎧 Pilih Trek:", list(MUSIK.keys()))
+    st.audio(MUSIK[pilihan], format="audio/mp3")
+
     st.markdown("---")
-    st.info("💡 Catatan: Jika audio tidak muncul, coba pilih trek lain.")
-# ==========================================
-# 1. DATASET KIMIA (PRESETS ZAT & INDIKATOR)
-# ==========================================
-elif selected_menu == "Indikator asam dan basa":
-    # Semua resource dan logika lokal dimasukkan ke dalam sub-menu ini agar tidak bocor
-    CHEMICALS = [
-        {"id": "hcl", "name": "Asam Klorida (HCl)", "formula": "HCl", "pH": 1.0, "type": "asam", "category": "Laboratorium", "common": "Asam kuat pembersih porselen", "dissociation": "HCl → H⁺ + Cl⁻"},
-        {"id": "h2so4", "name": "Asam Sulfat (Air Aki)", "formula": "H₂SO₄", "pH": 1.5, "type": "asam", "category": "Laboratorium", "common": "Air aki kendaraan pekat", "dissociation": "H₂SO₄ → 2H⁺ + SO₄²⁻"},
-        {"id": "vinegar", "name": "Asam Asetat (Cuka Makan)", "formula": "CH₃COOH", "pH": 3.0, "type": "asam", "category": "Sehari-hari", "common": "Cuka dapur encer", "dissociation": "CH₃COOH ⇌ H⁺ + CH₃COO⁻"},
-        {"id": "lemon", "name": "Asam Sitrat (Sari Lemon)", "formula": "C₆H₈O₇", "pH": 2.2, "type": "asam", "category": "Sehari-hari", "common": "Air perasan jeruk segar", "dissociation": "C₆H₈O₇ ⇌ H⁺ + C₆H₇O₇⁻"},
-        {"id": "water", "name": "Air Murni (H₂O)", "formula": "H₂O", "pH": 7.0, "type": "netral", "category": "Sehari-hari", "common": "Air suling / Aquades netral", "dissociation": "H₂O ⇌ H⁺ + OH⁻"},
-        {"id": "baking_soda", "name": "Soda Kue (NaHCO₃)", "formula": "NaHCO₃", "pH": 8.5, "type": "basa", "category": "Sehari-hari", "common": "Bahan pengembang roti rumahan", "dissociation": "NaHCO₃ → Na⁺ + HCO₃⁻"},
-        {"id": "limewater", "name": "Kalsium Hidroksida (Air Kapur)", "formula": "Ca(OH)₂", "pH": 11.5, "type": "basa", "category": "Laboratorium", "common": "Air kapur sirih jernih", "dissociation": "Ca(OH)₂ → Ca²⁺ + 2OH⁻"},
-        {"id": "naoh", "name": "Natrium Hidroksida (Sodapi)", "formula": "NaOH", "pH": 13.0, "type": "basa", "category": "Laboratorium", "common": "Sodapi pekat penghancur sumbatan", "dissociation": "NaOH → Na⁺ + OH⁻"},
-        {"id": "h2so4", "name": "Asam Sulfat (H2SO4)", "formula": "H2SO4", "pH": 0.5, "type": "asam", "category": "Laboratorium", "common": "Pereaksi analitik dan agen dehidrasi", "dissociation": "H2SO4 → 2H⁺ + SO4²⁻"},
-        {"id": "hno3", "name": "Asam Nitrat (HNO3)", "formula": "HNO3", "pH": 1.0, "type": "asam", "category": "Laboratorium", "common": "Oksidator kuat dan pelarut logam", "dissociation": "HNO3 → H⁺ + NO3⁻"},
-        {"id": "h3po4", "name": "Asam Fosfat (H3PO4)", "formula": "H3PO4", "pH": 1.5, "type": "asam", "category": "Laboratorium", "common": "Pembuatan buffer fosfat", "dissociation": "H3PO4 ⇌ 3H⁺ + PO4³⁻"},
-        {"id": "ch3cooh", "name": "Asam Asetat (CH3COOH)", "formula": "CH3COOH", "pH": 2.9, "type": "asam", "category": "Laboratorium", "common": "Pelarut organik lemah dan buffer asetat", "dissociation": "CH3COOH ⇌ CH3COO⁻ + H⁺"},
-        {"id": "hcooh", "name": "Asam Format (HCOOH)", "formula": "HCOOH", "pH": 2.3, "type": "asam", "category": "Laboratorium", "common": "Agen pereduksi dalam sintesis organik", "dissociation": "HCOOH ⇌ HCOO⁻ + H⁺"},
-        {"id": "h2c2o4", "name": "Asam Oksalat (H2C2O4)", "formula": "H2C2O4", "pH": 1.3, "type": "asam", "category": "Standar Primer", "common": "Standarisasi larutan kalium permanganat", "dissociation": "H2C2O4 ⇌ 2H⁺ + C2O4²⁻"},
-        {"id": "naoh", "name": "Natrium Hidroksida (NaOH)", "formula": "NaOH", "pH": 13.0, "type": "basa", "category": "Laboratorium", "common": "Titrasi alkalimetri dan pelarut organik", "dissociation": "NaOH → Na⁺ + OH⁻"},
-        {"id": "koh", "name": "Kalium Hidroksida (KOH)", "formula": "KOH", "pH": 13.0, "type": "basa", "category": "Laboratorium", "common": "Basa kuat untuk reaksi penyabunan", "dissociation": "KOH → K⁺ + OH⁻"},
-        {"id": "nh4oh", "name": "Amonium Hidroksida (NH4OH)", "formula": "NH4OH", "pH": 11.6, "type": "basa", "category": "Laboratorium", "common": "Basa lemah dan reagen pengendap", "dissociation": "NH4OH ⇌ NH4⁺ + OH⁻"},
-        {"id": "caoh2", "name": "Kalsium Hidroksida (Ca(OH)2)", "formula": "Ca(OH)2", "pH": 12.4, "type": "basa", "category": "Industri", "common": "Pengolahan air dan netralisasi limbah", "dissociation": "Ca(OH)2 → Ca²⁺ + 2OH⁻"},
-        {"id": "baoh2", "name": "Barium Hidroksida (Ba(OH)2)", "formula": "Ba(OH)2", "pH": 13.0, "type": "basa", "category": "Laboratorium", "common": "Titrasi asam organik", "dissociation": "Ba(OH)2 → Ba²⁺ + 2OH⁻"},
-        {"id": "nacl", "name": "Natrium Klorida (NaCl)", "formula": "NaCl", "pH": 7.0, "type": "garam", "category": "Umum", "common": "Pengatur kekuatan ionik larutan", "dissociation": "NaCl → Na⁺ + Cl⁻"},
-        {"id": "kcl", "name": "Kalium Klorida (KCl)", "formula": "KCl", "pH": 7.0, "type": "garam", "category": "Elektrokimia", "common": "Larutan pengisi elektroda pH", "dissociation": "KCl → K⁺ + Cl⁻"},
-        {"id": "kno3", "name": "Kalium Nitrat (KNO3)", "formula": "KNO3", "pH": 7.0, "type": "garam", "category": "Umum", "common": "Oksidator dan jembatan garam", "dissociation": "KNO3 → K⁺ + NO3⁻"},
-        {"id": "na2so4", "name": "Natrium Sulfat (Na2SO4)", "formula": "Na2SO4", "pH": 7.0, "type": "garam", "category": "Sintesis", "common": "Agen pengering (desikan) fasa organik", "dissociation": "Na2SO4 → 2Na⁺ + SO4²⁻"},
-        {"id": "cuso4", "name": "Tembaga(II) Sulfat (CuSO4)", "formula": "CuSO4", "pH": 4.0, "type": "garam", "category": "Analisis Kualitatif", "common": "Reagen biuret untuk uji protein", "dissociation": "CuSO4 → Cu²⁺ + SO4²⁻"},
-        {"id": "feso4", "name": "Besi(II) Sulfat (FeSO4)", "formula": "FeSO4", "pH": 3.5, "type": "garam", "category": "Laboratorium", "common": "Agen pereduksi dalam analisis redoks", "dissociation": "FeSO4 → Fe²⁺ + SO4²⁻"},
-        {"id": "fecl3", "name": "Besi(III) Klorida (FeCl3)", "formula": "FeCl3", "pH": 2.0, "type": "garam", "category": "Analisis Spesifik", "common": "Katalis asam Lewis dan identifikasi senyawa fenolik", "dissociation": "FeCl3 → Fe³⁺ + 3Cl⁻"},
-        {"id": "agno3", "name": "Perak Nitrat (AgNO3)", "formula": "AgNO3", "pH": 5.5, "type": "garam", "category": "Argentometri", "common": "Titran untuk penentuan klorida (Metode Mohr/Volhard)", "dissociation": "AgNO3 → Ag⁺ + NO3⁻"},
-        {"id": "kmno4", "name": "Kalium Permanganat (KMnO4)", "formula": "KMnO4", "pH": 7.5, "type": "garam", "category": "Permanganometri", "common": "Oksidator kuat sekaligus autoindikator", "dissociation": "KMnO4 → K⁺ + MnO4⁻"},
-        {"id": "k2cr2o7", "name": "Kalium Dikromat (K2Cr2O7)", "formula": "K2Cr2O7", "pH": 4.0, "type": "garam", "category": "Bikromatometri", "common": "Oksidator standar primer penentuan COD", "dissociation": "K2Cr2O7 → 2K⁺ + Cr2O7²⁻"},
-        {"id": "na2s2o3", "name": "Natrium Tiosulfat (Na2S2O3)", "formula": "Na2S2O3", "pH": 6.5, "type": "garam", "category": "Iodometri", "common": "Titran penentuan iodin bebas", "dissociation": "Na2S2O3 → 2Na⁺ + S2O3²⁻"},
-        {"id": "ki", "name": "Kalium Iodida (KI)", "formula": "KI", "pH": 7.0, "type": "garam", "category": "Iodometri", "common": "Penyedia ion iodida untuk pembentukan I2", "dissociation": "KI → K⁺ + I⁻"},
-        {"id": "naf", "name": "Natrium Fluorida (NaF)", "formula": "NaF", "pH": 8.0, "type": "garam", "category": "Biokimia", "common": "Inhibitor enzim", "dissociation": "NaF → Na⁺ + F⁻"},
-        {"id": "cacl2", "name": "Kalsium Klorida (CaCl2)", "formula": "CaCl2", "pH": 6.5, "type": "garam", "category": "Persiapan Sampel", "common": "Desikan higroskopis untuk desikator", "dissociation": "CaCl2 → Ca²⁺ + 2Cl⁻"},
-        {"id": "mgcl2", "name": "Magnesium Klorida (MgCl2)", "formula": "MgCl2", "pH": 6.0, "type": "garam", "category": "Biologi Molekuler", "common": "Kofaktor dalam reaksi PCR", "dissociation": "MgCl2 → Mg²⁺ + 2Cl⁻"},
-        {"id": "nh4cl", "name": "Amonium Klorida (NH4Cl)", "formula": "NH4Cl", "pH": 5.0, "type": "garam", "category": "Laboratorium", "common": "Komponen utama larutan penyangga salmiak", "dissociation": "NH4Cl → NH4⁺ + Cl⁻"},
-        {"id": "nh42so4", "name": "Amonium Sulfat ((NH4)2SO4)", "formula": "(NH4)2SO4", "pH": 5.5, "type": "garam", "category": "Biokimia", "common": "Presipitasi protein", "dissociation": "(NH4)2SO4 → 2NH4⁺ + SO4²⁻"},
-        {"id": "ch3coona", "name": "Natrium Asetat (CH3COONa)", "formula": "CH3COONa", "pH": 8.9, "type": "garam", "category": "Laboratorium", "common": "Pembentuk buffer basa konjugasi", "dissociation": "CH3COONa → Na⁺ + CH3COO⁻"},
-        {"id": "nacn", "name": "Natrium Sianida (NaCN)", "formula": "NaCN", "pH": 11.0, "type": "garam", "category": "Ekstraksi Logam", "common": "Ligan kuat dalam kompleksometri logam berat", "dissociation": "NaCN → Na⁺ + CN⁻"},
-        {"id": "kscn", "name": "Kalium Tiosianat (KSCN)", "formula": "KSCN", "pH": 7.0, "type": "garam", "category": "Argentometri", "common": "Titran metode Volhard atau identifikasi Besi(III)", "dissociation": "KSCN → K⁺ + SCN⁻"},
-        {"id": "bacl2", "name": "Barium Klorida (BaCl2)", "formula": "BaCl2", "pH": 6.5, "type": "garam", "category": "Gravimetri", "common": "Reagen pengendap ion sulfat", "dissociation": "BaCl2 → Ba²⁺ + 2Cl⁻"},
-        {"id": "pbno32", "name": "Timbal(II) Nitrat (Pb(NO3)2)", "formula": "Pb(NO3)2", "pH": 4.0, "type": "garam", "category": "Analisis Kualitatif", "common": "Identifikasi ion halida dan sulfat", "dissociation": "Pb(NO3)2 → Pb²⁺ + 2NO3⁻"},
-        {"id": "znso4", "name": "Seng Sulfat (ZnSO4)", "formula": "ZnSO4", "pH": 4.5, "type": "garam", "category": "Elektrolisis", "common": "Elektrolit standar sel Volta", "dissociation": "ZnSO4 → Zn²⁺ + SO4²⁻"},
-        {"id": "na2b4o7", "name": "Natrium Tetraborat (Na2B4O7)", "formula": "Na2B4O7", "pH": 9.2, "type": "garam", "category": "Standar Primer", "common": "Standarisasi larutan asam kuat", "dissociation": "Na2B4O7 → 2Na⁺ + B4O7²⁻"},
-        {"id": "na2edta", "name": "Natrium EDTA (Na2EDTA)", "formula": "Na2EDTA", "pH": 4.5, "type": "garam", "category": "Kompleksometri", "common": "Titrasi kompleksometri penentuan kesadahan air", "dissociation": "Na2H2EDTA → 2Na⁺ + H2EDTA²⁻"},
-        {"id": "hclo4", "name": "Asam Perklorat (HClO4)", "formula": "HClO4", "pH": 0.1, "type": "asam", "category": "Analisis Spesifik", "common": "Titrasi bebas air asam kuat", "dissociation": "HClO4 → H⁺ + ClO4⁻"},
-        {"id": "hf", "name": "Asam Fluorida (HF)", "formula": "HF", "pH": 3.2, "type": "asam", "category": "Persiapan Sampel", "common": "Pelarut silika dan kaca", "dissociation": "HF ⇌ H⁺ + F⁻"},
-        {"id": "hbr", "name": "Asam Bromida (HBr)", "formula": "HBr", "pH": 1.0, "type": "asam", "category": "Sintesis", "common": "Pembuatan bromida anorganik", "dissociation": "HBr → H⁺ + Br⁻"},
-        {"id": "hi", "name": "Asam Iodida (HI)", "formula": "HI", "pH": 1.0, "type": "asam", "category": "Sintesis", "common": "Agen pereduksi kuat dan katalis", "dissociation": "HI → H⁺ + I⁻"},
-        {"id": "hcn", "name": "Asam Sianida (HCN)", "formula": "HCN", "pH": 5.1, "type": "asam", "category": "Laboratorium", "common": "Sintesis polimer dan pertambangan", "dissociation": "HCN ⇌ H⁺ + CN⁻"},
-        {"id": "h2s", "name": "Hidrogen Sulfida (H2S)", "formula": "H2S", "pH": 4.0, "type": "asam", "category": "Analisis Kualitatif", "common": "Reagen pengendap kation golongan berat", "dissociation": "H2S ⇌ 2H⁺ + S²⁻"},
-        {"id": "c6h8o7", "name": "Asam Sitrat (C6H8O7)", "formula": "C6H8O7", "pH": 3.1, "type": "asam", "category": "Umum", "common": "Chelating agent dan larutan buffer", "dissociation": "C6H8O7 ⇌ 3H⁺ + C6H5O7³⁻"},
-        {"id": "c6h5cooh", "name": "Asam Benzoat (C6H5COOH)", "formula": "C6H5COOH", "pH": 4.2, "type": "asam", "category": "Kalorimetri", "common": "Standar kalibrasi bom kalorimeter", "dissociation": "C6H5COOH ⇌ C6H5COO⁻ + H⁺"},
-        {"id": "c6h6o", "name": "Fenol (C6H5OH)", "formula": "C6H5OH", "pH": 6.0, "type": "asam", "category": "Bahan Baku", "common": "Prekursor sintesis organik dan ekstraksi DNA", "dissociation": "C6H5OH ⇌ C6H5O⁻ + H⁺"},
-        {"id": "c4h6o6", "name": "Asam Tartarat (C4H6O6)", "formula": "C4H6O6", "pH": 3.0, "type": "asam", "category": "Analisis Makanan", "common": "Aditif dan resolusi campuran rasemat", "dissociation": "C4H6O6 ⇌ 2H⁺ + C4H4O6²⁻"},
-        {"id": "c3h6o3", "name": "Asam Laktat (C3H6O3)", "formula": "C3H6O3", "pH": 3.8, "type": "asam", "category": "Biokimia", "common": "Metabolit sekunder dan buffer ringan", "dissociation": "C3H6O3 ⇌ H⁺ + C3H5O3⁻"},
-        {"id": "lioh", "name": "Litium Hidroksida (LiOH)", "formula": "LiOH", "pH": 13.0, "type": "basa", "category": "Material", "common": "Absorben karbon dioksida", "dissociation": "LiOH → Li⁺ + OH⁻"},
-        {"id": "mgoh2", "name": "Magnesium Hidroksida (Mg(OH)2)", "formula": "Mg(OH)2", "pH": 10.5, "type": "basa", "category": "Umum", "common": "Antasida dan penetral asam", "dissociation": "Mg(OH)2 ⇌ Mg²⁺ + 2OH⁻"},
-        {"id": "aloh3", "name": "Aluminium Hidroksida (Al(OH)3)", "formula": "Al(OH)3", "pH": 9.5, "type": "basa", "category": "Umum", "common": "Flokulan dalam pengolahan air", "dissociation": "Al(OH)3 ⇌ Al³⁺ + 3OH⁻"},
-        {"id": "na2co3", "name": "Natrium Karbonat (Na2CO3)", "formula": "Na2CO3", "pH": 11.6, "type": "garam", "category": "Standar Primer", "common": "Standarisasi larutan asam standar", "dissociation": "Na2CO3 → 2Na⁺ + CO3²⁻"},
-        {"id": "nahco3", "name": "Natrium Bikarbonat (NaHCO3)", "formula": "NaHCO3", "pH": 8.3, "type": "garam", "category": "Laboratorium", "common": "Penetral asam ringan dan pembersih", "dissociation": "NaHCO3 → Na⁺ + HCO3⁻"},
-        {"id": "c6h5nh2", "name": "Anilin (C6H5NH2)", "formula": "C6H5NH2", "pH": 8.8, "type": "basa", "category": "Sintesis Organik", "common": "Pembuatan zat warna azo", "dissociation": "C6H5NH2 + H2O ⇌ C6H5NH3⁺ + OH⁻"},
-        {"id": "c5h5n", "name": "Piridin (C5H5N)", "formula": "C5H5N", "pH": 8.5, "type": "basa", "category": "Pelarut Organik", "common": "Pelarut basa lemah dan katalis", "dissociation": "C5H5N + H2O ⇌ C5H5NH⁺ + OH⁻"},
-        {"id": "ch3nh2", "name": "Metilamina (CH3NH2)", "formula": "CH3NH2", "pH": 11.8, "type": "basa", "category": "Sintesis Organik", "common": "Prekursor farmasi dan herbisida", "dissociation": "CH3NH2 + H2O ⇌ CH3NH3⁺ + OH⁻"},
-        {"id": "kbr", "name": "Kalium Bromida (KBr)", "formula": "KBr", "pH": 7.0, "type": "garam", "category": "Spektroskopi", "common": "Pembuatan pelet sampel FTIR", "dissociation": "KBr → K⁺ + Br⁻"},
-        {"id": "nabr", "name": "Natrium Bromida (NaBr)", "formula": "NaBr", "pH": 7.0, "type": "garam", "category": "Sintesis Organik", "common": "Reaksi substitusi alkil bromida", "dissociation": "NaBr → Na⁺ + Br⁻"},
-        {"id": "licl", "name": "Litium Klorida (LiCl)", "formula": "LiCl", "pH": 7.0, "type": "garam", "category": "Analisis Termal", "common": "Penurun titik beku dan kelembapan kalibrasi", "dissociation": "LiCl → Li⁺ + Cl⁻"},
-        {"id": "kclo3", "name": "Kalium Klorat (KClO3)", "formula": "KClO3", "pH": 7.0, "type": "garam", "category": "Oksidator", "common": "Pembuatan gas oksigen di laboratorium", "dissociation": "KClO3 → K⁺ + ClO3⁻"},
-        {"id": "naclo", "name": "Natrium Hipoklorit (NaClO)", "formula": "NaClO", "pH": 11.0, "type": "garam", "category": "Umum", "common": "Desinfektan dan agen pemutih", "dissociation": "NaClO → Na⁺ + ClO⁻"},
-        {"id": "kh2po4", "name": "Kalium Dihidrogen Fosfat (KH2PO4)", "formula": "KH2PO4", "pH": 4.5, "type": "garam", "category": "Laboratorium", "common": "Komponen utama larutan buffer fosfat", "dissociation": "KH2PO4 → K⁺ + H2PO4⁻"},
-        {"id": "k2hpo4", "name": "Dikalium Hidrogen Fosfat (K2HPO4)", "formula": "K2HPO4", "pH": 9.0, "type": "garam", "category": "Laboratorium", "common": "Pasangan konjugasi sistem buffer pH fisiologis", "dissociation": "K2HPO4 → 2K⁺ + HPO4²⁻"},
-        {"id": "na3po4", "name": "Natrium Fosfat (Na3PO4)", "formula": "Na3PO4", "pH": 12.0, "type": "garam", "category": "Umum", "common": "Agen pembersih dan pengendap ion", "dissociation": "Na3PO4 → 3Na⁺ + PO4³⁻"},
-        {"id": "c2h5oh", "name": "Etanol (C2H5OH)", "formula": "C2H5OH", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Pelarut universal sintesis dan sterilisasi alat", "dissociation": "Tidak terdisosiasi"},
-        {"id": "ch3oh", "name": "Metanol (CH3OH)", "formula": "CH3OH", "pH": 7.0, "type": "netral", "category": "Kromatografi", "common": "Fasa gerak utama HPLC dan TLC", "dissociation": "Tidak terdisosiasi"},
-        {"id": "ch3coch3", "name": "Aseton (CH3COCH3)", "formula": "CH3COCH3", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Pencuci alat gelas dan pelarut polar aprotik", "dissociation": "Tidak terdisosiasi"},
-        {"id": "ch3cooc2h5", "name": "Etil Asetat (CH3COOC2H5)", "formula": "CH3COOC2H5", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Pelarut standar ekstraksi cair-cair sintesis organik", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c6h14", "name": "Heksana (C6H14)", "formula": "C6H14", "pH": 7.0, "type": "netral", "category": "Kromatografi", "common": "Pelarut non-polar untuk ekstraksi lipid", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c6h6", "name": "Benzena (C6H6)", "formula": "C6H6", "pH": 7.0, "type": "netral", "category": "Bahan Baku", "common": "Cincin aromatik dasar sintesis turunan fenol/anilin", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c7h8", "name": "Toluena (C7H8)", "formula": "C7H8", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Alternatif pelarut yang lebih aman dari benzena", "dissociation": "Tidak terdisosiasi"},
-        {"id": "chcl3", "name": "Kloroform (CHCl3)", "formula": "CHCl3", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Pelarut NMR dan ekstraksi alkaloid", "dissociation": "Tidak terdisosiasi"},
-        {"id": "ch2cl2", "name": "Diklorometana (CH2Cl2)", "formula": "CH2Cl2", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Pelarut organik mudah menguap (DCM) sintetis", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c4h10o", "name": "Dietil Eter (C4H10O)", "formula": "C4H10O", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Fasa polar untuk ekstraksi senyawa hidrofobik", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c6h12o6", "name": "Glukosa (C6H12O6)", "formula": "C6H12O6", "pH": 7.0, "type": "netral", "category": "Biokimia", "common": "Substrat mikrobiologi dan standar gula", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c12h22o11", "name": "Sukrosa (C12H22O11)", "formula": "C12H22O11", "pH": 7.0, "type": "netral", "category": "Umum", "common": "Penetapan brix kualitatif di lab pangan", "dissociation": "Tidak terdisosiasi"},
-        {"id": "h2o2", "name": "Hidrogen Peroksida (H2O2)", "formula": "H2O2", "pH": 4.5, "type": "asam", "category": "Oksidator", "common": "Oksidator sampel organik untuk persiapan destruksi", "dissociation": "H2O2 ⇌ H⁺ + HO2⁻"},
-        {"id": "khp", "name": "Kalium Hidrogen Ftalat (KHP)", "formula": "KHC8H4O4", "pH": 4.0, "type": "garam", "category": "Standar Primer", "common": "Standarisasi presisi larutan basa seperti NaOH", "dissociation": "KHC8H4O4 → K⁺ + HC8H4O4⁻"},
-        {"id": "na2c2o4", "name": "Natrium Oksalat (Na2C2O4)", "formula": "Na2C2O4", "pH": 8.0, "type": "garam", "category": "Standar Primer", "common": "Standarisasi larutan kalium permanganat", "dissociation": "Na2C2O4 → 2Na⁺ + C2O4²⁻"},
-        {"id": "kio3", "name": "Kalium Iodat (KIO3)", "formula": "KIO3", "pH": 7.0, "type": "garam", "category": "Standar Primer", "common": "Standarisasi larutan natrium tiosulfat", "dissociation": "KIO3 → K⁺ + IO3⁻"},
-        {"id": "k2cro4", "name": "Kalium Kromat (K2CrO4)", "formula": "K2CrO4", "pH": 8.5, "type": "garam", "category": "Indikator", "common": "Indikator spesifik metode titrasi Mohr", "dissociation": "K2CrO4 → 2K⁺ + CrO4²⁻"},
-        {"id": "nano2", "name": "Natrium Nitrit (NaNO2)", "formula": "NaNO2", "pH": 9.0, "type": "garam", "category": "Sintesis Organik", "common": "Reaksi pembentukan garam diazonium", "dissociation": "NaNO2 → Na⁺ + NO2⁻"},
-        {"id": "nahso4", "name": "Natrium Bisulfat (NaHSO4)", "formula": "NaHSO4", "pH": 1.4, "type": "garam", "category": "Laboratorium", "common": "Penyumbang suasana asam alternatif pengurai", "dissociation": "NaHSO4 → Na⁺ + H⁺ + SO4²⁻"},
-        {"id": "k2so4", "name": "Kalium Sulfat (K2SO4)", "formula": "K2SO4", "pH": 7.0, "type": "garam", "category": "Pertanian", "common": "Standardisasi analisa nutrisi tanaman", "dissociation": "K2SO4 → 2K⁺ + SO4²⁻"},
-        {"id": "mnso4", "name": "Mangan(II) Sulfat (MnSO4)", "formula": "MnSO4", "pH": 4.5, "type": "garam", "category": "Analisis Air", "common": "Reagen fiksasi oksigen pada uji BOD (Metode Winkler)", "dissociation": "MnSO4 → Mn²⁺ + SO4²⁻"},
-        {"id": "crcl3", "name": "Kromium(III) Klorida (CrCl3)", "formula": "CrCl3", "pH": 3.0, "type": "garam", "category": "Katalis", "common": "Pembuatan katalis reaksi koordinasi", "dissociation": "CrCl3 → Cr³⁺ + 3Cl⁻"},
-        {"id": "cdso4", "name": "Kadmium Sulfat (CdSO4)", "formula": "CdSO4", "pH": 4.5, "type": "garam", "category": "Elektrokimia", "common": "Sel standar Weston pengukur E0", "dissociation": "CdSO4 → Cd²⁺ + SO4²⁻"},
-        {"id": "sncl2", "name": "Timah(II) Klorida (SnCl2)", "formula": "SnCl2", "pH": 2.5, "type": "garam", "category": "Oksidimetri", "common": "Reduktor Fe3+ menjadi Fe2+ sebelum titrasi permanganat", "dissociation": "SnCl2 → Sn²⁺ + 2Cl⁻"},
-        {"id": "hgcl2", "name": "Raksa(II) Klorida (HgCl2)", "formula": "HgCl2", "pH": 4.0, "type": "garam", "category": "Oksidimetri", "common": "Penghilang kelebihan reduktor stano klorida", "dissociation": "HgCl2 ⇌ Hg²⁺ + 2Cl⁻"},
-        {"id": "agno2", "name": "Perak Nitrit (AgNO2)", "formula": "AgNO2", "pH": 5.0, "type": "garam", "category": "Sintesis Organik", "common": "Sintesis senyawa nitroalifatik", "dissociation": "AgNO2 → Ag⁺ + NO2⁻"},
-        {"id": "na2moo4", "name": "Natrium Molibdat (Na2MoO4)", "formula": "Na2MoO4", "pH": 8.0, "type": "garam", "category": "Analisis Kualitatif", "common": "Identifikasi alkaloid menggunakan Reagen Fröhde", "dissociation": "Na2MoO4 → 2Na⁺ + MoO4²⁻"},
-        {"id": "k3fecn6", "name": "Kalium Ferisianida (K3[Fe(CN)6])", "formula": "K3[Fe(CN)6]", "pH": 6.5, "type": "garam", "category": "Analisis Warna", "common": "Identifikasi ion Fe2+ membentuk kompleks biru", "dissociation": "K3[Fe(CN)6] → 3K⁺ + [Fe(CN)6]³⁻"},
-        {"id": "nh4no3", "name": "Amonium Nitrat (NH4NO3)", "formula": "NH4NO3", "pH": 5.4, "type": "garam", "category": "Bahan Peledak", "common": "Eksperimen eksotermik pembentukan gas", "dissociation": "NH4NO3 → NH4⁺ + NO3⁻"},
-        {"id": "cacr2o7", "name": "Kalsium Dikromat (CaCr2O7)", "formula": "CaCr2O7", "pH": 4.0, "type": "garam", "category": "Oksidator", "common": "Agen pembersih porselen dan oksidasi", "dissociation": "CaCr2O7 → Ca²⁺ + Cr2O7²⁻"},
-        {"id": "niso4", "name": "Nikel(II) Sulfat (NiSO4)", "formula": "NiSO4", "pH": 4.5, "type": "garam", "category": "Elektrolisis", "common": "Elektrolit standar penyepuhan listrik", "dissociation": "NiSO4 → Ni²⁺ + SO4²⁻"},
-        {"id": "lino3", "name": "Litium Nitrat (LiNO3)", "formula": "LiNO3", "pH": 7.0, "type": "garam", "category": "Penyimpanan Termal", "common": "Garam penahan panas suhu tinggi", "dissociation": "LiNO3 → Li⁺ + NO3⁻"},
-        {"id": "srcl2", "name": "Stronsium Klorida (SrCl2)", "formula": "SrCl2", "pH": 7.0, "type": "garam", "category": "Analisis Nyala", "common": "Pewarna nyala api merah terang lab", "dissociation": "SrCl2 → Sr²⁺ + 2Cl⁻"},
-        {"id": "csoh", "name": "Sesium Hidroksida (CsOH)", "formula": "CsOH", "pH": 14.0, "type": "basa", "category": "Katalis Basa", "common": "Basa sangat kuat pelarut silikon", "dissociation": "CsOH → Cs⁺ + OH⁻"},
-        {"id": "rboh", "name": "Rubidium Hidroksida (RbOH)", "formula": "RbOH", "pH": 13.5, "type": "basa", "category": "Material Lanjut", "common": "Reaktan sintesis rubidium katalitik", "dissociation": "RbOH → Rb⁺ + OH⁻"},
-        {"id": "c2h6o2", "name": "Etilen Glikol (C2H6O2)", "formula": "C2H6O2", "pH": 7.0, "type": "netral", "category": "Polimer", "common": "Bahan monomer sintesis poliester (PET)", "dissociation": "Tidak terdisosiasi"},
-        {"id": "c3h8o", "name": "Isopropanol (C3H8O)", "formula": "C3H8O", "pH": 7.0, "type": "netral", "category": "Pelarut Organik", "common": "Pelarut presipitasi asam nukleat biologi", "dissociation": "Tidak terdisosiasi"}
-]
-    
+    st.markdown("""
+    <div class="ccard">
+      <b>💡 Tips Musik Belajar</b><br>
+      <span class="mono">
+      • Lo-Fi → cocok untuk membaca & menulis<br>
+      • Ambient Nature → cocok untuk konsentrasi dalam<br>
+      • Piano → cocok untuk menghafal<br>
+      • Deep Focus → cocok untuk mengerjakan soal<br>
+      • Coffee Shop → cocok untuk brainstorming
+      </span>
+    </div>
+    """, unsafe_allow_html=True)
+    st.info("⚠️ Jika audio tidak muncul, coba pilih trek lain atau periksa koneksi internet.")
 
-    INDICATORS = {
-        "lakmus": {
-            "name": "Kertas Lakmus (Litmus)",
-            "range": (4.5, 8.3),
-            "low_color": "#ef4444", "low_label": "MERAH ASAM",
-            "high_color": "#3b82f6", "high_label": "BIRU BASA",
-            "mid_color": "#a855f7", "mid_label": "UNGU REAKSI"
-        },
-        "pp": {
-            "name": "Phenolphthalein (PP)",
-            "range": (8.2, 10.0),
-            "low_color": "#f8fafc", "low_label": "TIDAK BERWARNA",
-            "high_color": "#ec4899", "high_label": "MERAH MUDA PEKAT",
-            "mid_color": "#fbcfe8", "mid_label": "MERAH MUDA SEMU"
-        },
-        "btb": {
-            "name": "Bromothymol Blue (BTB)",
-            "range": (6.0, 7.6),
-            "low_color": "#eab308", "low_label": "KUNING ASAM",
-            "high_color": "#1d4ed8", "high_label": "BIRU BASA",
-            "mid_color": "#22c55e", "mid_label": "HIJAU NETRAL"
-        },
-        "mr": {
-            "name": "Metil Merah (Methyl Red)",
-            "range": (4.4, 6.2),
-            "low_color": "#ef4444", "low_label": "MERAH ASAM",
-            "high_color": "#eab308", "high_label": "KUNING BASA",
-            "mid_color": "#f97316", "mid_label": "JINGGA TRANSISI"
-        },
-        "universal": {
-            "name": "Indikator Universal",
-            "range": (0.0, 14.0),
-            "low_color": "#dc2626", "low_label": "MERAH (pH KOROSIF)",
-            "high_color": "#581c87", "high_label": "UNGU (pH BASA KUAT)",
-            "mid_color": "#16a34a", "mid_label": "HIJAU (pH NETRAL)"
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  5. SIMULASI INDIKATOR
+# ─────────────────────────────────────────────────────────────────────
+elif selected_menu == "🧪 Simulasi Indikator":
+    st.markdown("# 🧪 Simulasi Indikator Asam-Basa")
+    st.markdown("Pilih zat kimia dan indikator, lalu amati perubahan warna larutan.")
+
+    col_left, col_right = st.columns([5, 7])
+
+    with col_left:
+        st.markdown("### 🔬 Parameter Simulasi")
+
+        preset_names = [c["name"] for c in CHEMICALS]
+        pilihan_zat  = st.selectbox("Pilih Zat Kimia:", preset_names, index=0)
+        zat_data     = next(c for c in CHEMICALS if c["name"] == pilihan_zat)
+
+        pilihan_ind  = st.selectbox("Pilih Indikator:",
+                                    list(INDICATORS.keys()),
+                                    format_func=lambda k: INDICATORS[k]["name"])
+        ind_data     = INDICATORS[pilihan_ind]
+
+        st.markdown("---")
+        ph_sim = st.slider("🎚️ Atur pH Manual:", 0.0, 14.0,
+                           value=float(zat_data["pH"]), step=0.1,
+                           help="Geser untuk mengubah pH secara manual")
+
+        # Info ionisasi
+        kls, kls_clr = klasifikasi(ph_sim)
+        st.markdown(f"""
+        <div class="ccard" style="margin-top:1rem;">
+          <div class="mono">
+            <b>Rumus:</b> {zat_data['formula']}<br>
+            <b>Kelas:</b> <span style="color:{kls_clr};font-weight:700;">{kls}</span><br>
+            <b>Ionisasi:</b> {zat_data['dis']}<br>
+            <b>Kategori:</b> {zat_data['cat']}<br>
+            <b>Keterangan:</b> {zat_data['desc']}
+          </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_right:
+        st.markdown("### 🔮 Beaker Reaktif")
+
+        liq_color  = warna_indikator(ph_sim, ind_data)
+        liq_label  = label_indikator(ph_sim, ind_data)
+        H_conc     = 10 ** (-ph_sim)
+        OH_conc    = 10 ** (-(14 - ph_sim))
+        level_px   = int(ph_sim * 7) + 50  # ketinggian cairan 50-148 px
+
+        # Inject animasi bubble via CSS terpisah
+        st.markdown("""
+        <style>
+        @keyframes bubble {
+          0%   { transform: translateY(0);    opacity: 0.6; }
+          100% { transform: translateY(-40px); opacity: 0;   }
         }
-    }
+        </style>
+        """, unsafe_allow_html=True)
 
-    def hitung_warna_indikator(ph, ind_data):
-        low, high = ind_data["range"]
-        if ind_data["name"] == "Indikator Universal":
-            if ph < 3: return "#dc2626"
-            elif ph < 5: return "#f97316"
-            elif ph < 6.5: return "#eab308"
-            elif ph < 7.5: return "#16a34a"
-            elif ph < 9: return "#0284c7"
-            elif ph < 11: return "#1d4ed8"
-            else: return "#581c87"
+        # Bangun HTML beaker tanpa komentar HTML agar tidak mengacaukan render
+        shadow_box  = f"inset 0 0 20px rgba(0,0,0,0.3), 0 0 20px {liq_color}44"
+        text_shadow = f"0 0 20px {liq_color}99"
+
+        beaker_html = (
+            "<div style='display:flex;flex-direction:column;align-items:center;gap:16px;'>"
+
+            # -- wrapper beaker
+            "<div style='position:relative;width:180px;height:220px;'>"
+
+            # -- bibir atas beaker
+            "<div style='position:absolute;top:0;left:50%;transform:translateX(-50%);"
+            "width:164px;height:12px;"
+            "border:3px solid rgba(200,200,255,0.35);border-radius:4px;'></div>"
+
+            # -- tabung beaker
+            f"<div style='position:absolute;bottom:0;left:50%;transform:translateX(-50%);"
+            f"width:150px;height:200px;"
+            f"border:3px solid rgba(200,200,255,0.35);border-top:none;"
+            f"border-radius:0 0 22px 22px;overflow:hidden;"
+            f"background:rgba(255,255,255,0.03);"
+            f"box-shadow:{shadow_box};'>"
+
+            # -- cairan
+            f"<div style='position:absolute;bottom:0;left:0;right:0;"
+            f"height:{level_px}px;"
+            f"background:{liq_color};opacity:0.85;"
+            f"border-radius:0 0 18px 18px;"
+            f"box-shadow:inset 0 6px 12px rgba(255,255,255,0.2);'>"
+
+            # -- gelembung 1
+            "<div style='position:absolute;bottom:10px;left:25%;width:6px;height:6px;"
+            "background:rgba(255,255,255,0.5);border-radius:50%;"
+            "animation:bubble 2s infinite;'></div>"
+
+            # -- gelembung 2
+            "<div style='position:absolute;bottom:20px;left:60%;width:4px;height:4px;"
+            "background:rgba(255,255,255,0.4);border-radius:50%;"
+            "animation:bubble 2.5s infinite 0.5s;'></div>"
+
+            "</div>"  # tutup cairan
+
+            # -- skala ukur
+            "<div style='position:absolute;right:8px;top:15px;height:155px;"
+            "display:flex;flex-direction:column;justify-content:space-between;"
+            "font-family:monospace;font-size:8px;color:rgba(200,220,255,0.6);'>"
+            "<span>150ml</span><span>100ml</span><span>50ml</span>"
+            "</div>"
+
+            "</div>"  # tutup tabung beaker
+            "</div>"  # tutup wrapper beaker
+
+            # -- label pH besar
+            "<div style='text-align:center;'>"
+            f"<div style='font-family:monospace;font-size:3.2rem;font-weight:700;"
+            f"color:{liq_color};text-shadow:{text_shadow};line-height:1;'>"
+            f"pH {ph_sim:.1f}</div>"
+            f"<div style='font-size:0.9rem;font-weight:600;margin-top:4px;"
+            f"color:{liq_color};opacity:0.85;'>{liq_label}</div>"
+            "</div>"
+
+            "</div>"  # tutup flex container
+        )
+
+        st.markdown(beaker_html, unsafe_allow_html=True)
+
+        st.markdown("")
+
+        # Metrik bawah beaker
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Klasifikasi", kls)
+        m2.metric("[H⁺] mol/L",  f"{H_conc:.3f}")
+        m3.metric("[OH⁻] mol/L", f"{OH_conc:.3f}")
+
+    # Tabel semua indikator
+    with st.expander("📋 Status Semua Indikator pada pH ini"):
+        rows = []
+        for k, v in INDICATORS.items():
+            lo, hi = v["range"]
+            rows.append({
+                "Indikator": v["name"],
+                "Rentang pH": f"{lo} – {hi}",
+                "Status": "Asam" if ph_sim < lo else ("Basa" if ph_sim > hi else "Transisi"),
+                "Warna": warna_indikator(ph_sim, v),
+                "Keterangan": label_indikator(ph_sim, v),
+            })
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  6. KALKULATOR pH
+# ─────────────────────────────────────────────────────────────────────
+elif selected_menu == "🧮 Kalkulator pH":
+    st.markdown("# 🧮 Kalkulator pH Lengkap")
+    st.markdown("Hitung nilai pH dari berbagai jenis larutan berdasarkan konsentrasi.")
+
+    tab1, tab2, tab3 = st.tabs(["⚗️ Hitung dari Konsentrasi", "📊 Buffer Henderson-Hasselbalch", "🧫 Titrasi Asam-Basa"])
+
+# ── Tab 1: Dari Konsentrasi ──────────────────────────────────────
+    with tab1:
+        k1, k2 = st.columns(2)
+        with k1:
+            # Dropdown kini mengambil list dari DATABASE_LARUTAN
+            nama_larutan = st.selectbox("Jenis Larutan:", list(DATABASE_LARUTAN.keys()))
+            konsentrasi = st.number_input("Konsentrasi (mol/L):", min_value=0.0001,
+                                          max_value=10.0, value=0.1, step=0.01, format="%.4f")
+
+        # Mengambil dictionary data yang spesifik berdasarkan nama yang dipilih
+        data_terpilih = DATABASE_LARUTAN[nama_larutan]
         
-        if ph < low:
-            return ind_data["low_color"]
-        elif ph > high:
-            return ind_data["high_color"]
-        else:
-            return ind_data["mid_color"]
+        # Eksekusi fungsi pH dinamis
+        ph_hasil, rumus_str = hitung_ph(data_terpilih, konsentrasi)
+        kls2, kls2_clr = klasifikasi(ph_hasil)
+        H2  = 10 ** (-ph_hasil)
+        OH2 = 10 ** (-(14 - ph_hasil))
 
-    st.title("🧪 ChemClass - Indikator Asam dan Basa")
-    st.write("Belajar sains asam-basa bersama ChemClass!")
-
-    menu_tabs = st.tabs(["📊 LAB SIMULATOR"])
-
-    with menu_tabs[0]:
-        col_input, col_display = st.columns([5, 7])
-        
-        with col_input:
-            st.subheader("💡 Parameter Simulasi")
-            
-            preset_names = [chem["name"] for chem in CHEMICALS]
-            pilihan_preset = st.selectbox("Pilih Preset Zat Kimia:", preset_names, index=2)
-            selected_chem = next(chem for chem in CHEMICALS if chem["name"] == pilihan_preset)
-            
-            pilihan_ind = st.selectbox(
-                "Pilihan Kertas Indikator:",
-                options=list(INDICATORS.keys()),
-                format_func=lambda x: INDICATORS[x]["name"]
-            )
-            selected_ind_data = INDICATORS[pilihan_ind]
-            
-            st.write("---")
-            st.markdown("**Kontrol pH Manual (Dial):** Modifikasi nilai derajat keasaman secara langsung")
-            simulated_ph = st.slider("Mengatur pH:", min_value=0.0, max_value=14.0, value=selected_chem["pH"], step=0.1)
-
-        with col_display:
-            st.subheader("🔮 Simulator Beaker Reaktif")
-            
-            liquid_color = hitung_warna_indikator(simulated_ph, selected_ind_data)
-            
-            # Memperbaiki string CSS typo 'Q' pada box-shadow bawaan kode awal
-            container_html = f"""
-            <div class="beaker-container" style="text-align: center;">
-                <span style="font-size: 11px; font-weight: bold; color: #d8b4fe; display: block; margin-bottom: 15px; letter-spacing: 0.1em; font-family: monospace;">LABORATORIUM METRIK UNGU</span>
-                <div style="
-                    width: 140px; 
-                    height: 160px; 
-                    border: 4px solid rgba(168, 85, 247, 0.4); 
-                    border-top: none;
-                    border-radius: 0 0 16px 16px; 
-                    margin: 0 auto; 
-                    position: relative;
-                    box-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
-                ">
-                    <div style="
-                        position: absolute; 
-                        bottom: 8px; 
-                        left: 6px; 
-                        right: 6px; 
-                        height: {int(simulated_ph * 4.5) + 50}px; 
-                        background-color: {liquid_color}; 
-                        border-radius: 0 0 10px 10px;
-                        transition: background-color 0.4s ease, height 0.4s ease;
-                        box-shadow: inset 0 4px 8px rgba(255,255,255,0.15);
-                    "></div>
-                    <div style="position: absolute; left: 10px; top: 30px; border-left: 2px solid rgba(168, 85, 247, 0.3); height: 100px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; padding-left: 5px; font-size: 8px; font-family: monospace; color: #d8b4fe;">
-                        <span>-- 150ml</span>
-                        <span>-- 100ml</span>
-                        <span>-- 50ml</span>
-                    </div>
-                </div>
-                <div style="margin-top: 20px; font-weight: bold; font-size: 20px; color: #f3e8ff; text-shadow: 0 0 8px {liquid_color};">
-                    Nilai pH Cairan: <span style="color: {liquid_color};">{simulated_ph:.1f}</span>
-                </div>
-            </div>
-            """
-            st.markdown(container_html, unsafe_allow_html=True)
-            
+        with k2:
             st.markdown(f"""
-            <div class="chemical-hud" style="margin-top:20px; padding:15px; background: rgba(168, 85, 247, 0.1); border-radius:10px;">
-                <h4 style="margin-top:0px; color: #e9d5ff !important; font-family: monospace;">📋 INFORMASI SENYAWA</h4>
-                <b>Nama Senyawa:</b> {selected_chem['name']} ({selected_chem['formula']})<br/>
-                <b>Nama Populer:</b> {selected_chem['common']}<br/>
-                <b>Ionisasi Disosiasi:</b> <code>{selected_chem['dissociation']}</code><br/>
-                <b>Kategori Kelas:</b> {selected_chem['category']}
+            <div style="background:rgba(0,0,0,0.2); border-radius:20px; padding:2rem;
+              text-align:center; border:2px solid {kls2_clr}44; margin-top:0.5rem;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:4rem;
+                font-weight:700; color:{kls2_clr}; line-height:1;
+                text-shadow:0 0 20px {kls2_clr}88;">pH {ph_hasil:.2f}</div>
+              <div style="font-size:1.1rem; font-weight:700; color:{kls2_clr};
+                margin-top:8px;">{kls2}</div>
             </div>
             """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="ccard" style="margin-top:1rem;">
+          <b>📐 Langkah Perhitungan:</b><br>
+          <span class="mono">{rumus_str.replace('**','')}</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        r1, r2 = st.columns(2)
+        r1.metric("[H⁺]",  f"{H2:.4f} mol/L")
+        r2.metric("[OH⁻]", f"{OH2:.4f} mol/L")
+
+        # Visualisasi mini semua indikator
+        st.markdown("---")
+        st.markdown("**🎨 Tampilan Semua Indikator:**")
+        ind_cols = st.columns(len(INDICATORS))
+        for i, (k, v) in enumerate(INDICATORS.items()):
+            warna = warna_indikator(ph_hasil, v)
+            with ind_cols[i]:
+                st.markdown(f"""
+                <div style="text-align:center; padding:0.8rem;">
+                  <div style="width:50px;height:50px;border-radius:50%;
+                    background:{warna};margin:0 auto 8px;
+                    box-shadow:0 0 15px {warna}88;
+                    border:2px solid rgba(255,255,255,0.2);"></div>
+                  <div style="font-size:0.65rem; font-family:'JetBrains Mono',monospace;
+                    color:{warna};">{v['name'].split('(')[0].strip()}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # ── Tab 2: Buffer ────────────────────────────────────────────────
+    with tab2:
+        # Pilihan sistem
+        jenis_buffer = st.radio("Pilih Sistem Penyangga:", 
+                                ["🟢 Buffer Asam (Asam Lemah + Basa Konjugasi)", "🔵 Buffer Basa (Basa Lemah + Asam Konjugasi)"], 
+                                horizontal=True)
+
+        if "Asam" in jenis_buffer:
+            st.markdown("""
+            <div class="ccard">
+              <a>Persamaan Henderson-Hasselbalch (Sistem Asam):</b><br>
+              <span class="mono" style="font-size:1.1rem;">pH = pKa + log ( [A⁻] / [HA] )</span><br><br>
+              Gunakan untuk menghitung pH larutan penyangga yang terdiri dari <b>asam lemah</b> dan garamnya.
+            </div>
+            """, unsafe_allow_html=True)
+            
+            c1, c2, c3 = st.columns(3)
+            with c1: pK = st.number_input("pKa Asam:", value=4.74, step=0.01)
+            with c2: c_asam = st.number_input("[HA] (mol/L):", value=0.10, step=0.01)
+            with c3: c_garam = st.number_input("[A⁻] (mol/L):", value=0.10, step=0.01)
+            
+            rasio = c_garam / c_asam
+            ph_buf = round(pK + math.log10(rasio), 2)
+            rumus_display = f"pH = {pK:.2f} + log({c_garam:.4f} / {c_asam:.4f}) = {pK:.2f} + {math.log10(rasio):.4f}"
+
+        else:
+            st.markdown("""
+            <div class="ccard">
+              <b>Persamaan Henderson-Hasselbalch (Sistem Basa):</b><br>
+              <span class="mono" style="font-size:1.1rem;">pOH = pKb + log ( [BH⁺] / [B] )</span><br>
+              <span class="mono" style="font-size:1.1rem;">pH = 14 - pOH</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            c1, c2, c3 = st.columns(3)
+            with c1: pK = st.number_input("pKb Basa:", value=4.75, step=0.01)
+            with c2: c_basa = st.number_input("[B] (mol/L):", value=0.10, step=0.01)
+            with c3: c_konj = st.number_input("[BH⁺] (mol/L):", value=0.10, step=0.01)
+            
+            rasio = c_konj / c_basa
+            poh_buf = pK + math.log10(rasio)
+            ph_buf = round(14 - poh_buf, 2)
+            rumus_display = f"pOH = {pK:.2f} + log({c_konj:.4f} / {c_basa:.4f}) = {poh_buf:.4f} <br> pH = 14 - {poh_buf:.4f}"
+
+        # Tampilan Hasil pH
+        kls, kls_clr = klasifikasi(ph_buf)
+        st.markdown(f"""
+        <div style="background:rgba(0,0,0,0.2); border-radius:16px; padding:1.5rem; text-align:center; border:2px solid {kls_clr}44; margin-top:1rem;">
+          <div class="mono" style="color:#94a3b8;">{rumus_display}</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:3rem; font-weight:700; color:{kls_clr};">pH = {ph_buf:.2f}</div>
+          <div style="color:{kls_clr}; font-weight:700;">{kls}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Tab 3: TITRASI POLIPROTIK & HIDROLISIS ───────────────────────
+    with tab3:
+        st.markdown("""
+        <div class="ccard">
+          <b>Prinsip Titik Ekuivalen Asidimetri / Alkalimetri:</b><br>
+          <span class="mono">n₁ × M₁ × V₁ = n₂ × M₂ × V₂</span><br><br>
+          <i>Dimana <b>n</b> adalah valensi (jumlah ion H⁺ atau OH⁻ yang dilepaskan). pH pada titik ekuivalen dihitung secara otomatis menggunakan prinsip hidrolisis garam.</i>
+        </div>
+        """, unsafe_allow_html=True)
+
+        t1, t2 = st.columns(2)
+        with t1:
+            st.markdown("**Analit (Larutan di Erlenmeyer)**")
+            analit_name = st.selectbox("Jenis Analit:", list(DATABASE_LARUTAN.keys()), key="analit_sel")
+            M1 = st.number_input("Molaritas Analit (M₁):", value=0.100, step=0.01, min_value=0.001, format="%.4f")
+            V1 = st.number_input("Volume Analit (V₁ mL):", value=25.0, step=1.0, min_value=0.1, format="%.1f")
+        with t2:
+            st.markdown("**Titran (Larutan di Buret)**")
+            titran_name = st.selectbox("Jenis Titran:", list(DATABASE_LARUTAN.keys()), key="titran_sel")
+            M2 = st.number_input("Molaritas Titran (M₂):", value=0.100, step=0.01, min_value=0.001, format="%.4f")
+
+        data_analit = DATABASE_LARUTAN[analit_name]
+        data_titran = DATABASE_LARUTAN[titran_name]
+        
+        n1 = data_analit.get("valensi", 1)
+        n2 = data_titran.get("valensi", 1)
+        
+        is_analit_asam = "asam" in data_analit["jenis"]
+        is_titran_asam = "asam" in data_titran["jenis"]
+        
+        # Cegah perhitungan Asam dengan Asam / Basa dengan Basa
+        if is_analit_asam == is_titran_asam:
+            st.error("⚠️ **Titrasi Tidak Valid!** Analit dan Titran harus kombinasi Asam dan Basa (tidak boleh sejenis).")
+        else:
+            # 1. Menghitung Volume Titran (V2)
+            V2_eq = (n1 * M1 * V1) / (n2 * M2)
+            mol_eq = n1 * M1 * (V1 / 1000)
+            
+            # 2. Menghitung pH pada Titik Ekuivalen (Hidrolisis Garam)
+            V_total = V1 + V2_eq
+            Cs = (M1 * V1) / V_total 
+            Kw = 1e-14
+            
+            if "kuat" in data_analit["jenis"] and "kuat" in data_titran["jenis"]:
+                pH_eq = 7.00
+                rumus_ph = "pH = 7.00 (Tidak terjadi hidrolisis, garam bersifat netral)"
+                
+            elif "lemah" in data_analit["jenis"] and "kuat" in data_titran["jenis"]:
+                if is_analit_asam: # Asam Lemah + Basa Kuat
+                    Ka = data_analit["K"]
+                    OH = math.sqrt((Kw / Ka) * Cs)
+                    pH_eq = 14 - (-math.log10(OH))
+                    rumus_ph = f"Hidrolisis Basa: [OH⁻] = √((Kw / Ka) × M_garam) = {OH:.7f} M"
+                else: # Basa Lemah + Asam Kuat
+                    Kb = data_analit["K"]
+                    H = math.sqrt((Kw / Kb) * Cs)
+                    pH_eq = -math.log10(H)
+                    rumus_ph = f"Hidrolisis Asam: [H⁺] = √((Kw / Kb) × M_garam) = {H:.7f} M"
+                    
+            elif "kuat" in data_analit["jenis"] and "lemah" in data_titran["jenis"]:
+                if is_titran_asam: # Basa Kuat + Asam Lemah
+                    Ka = data_titran["K"]
+                    OH = math.sqrt((Kw / Ka) * Cs)
+                    pH_eq = 14 - (-math.log10(OH))
+                    rumus_ph = f"Hidrolisis Basa: [OH⁻] = √((Kw / Ka) × M_garam) = {OH:.7f} M"
+                else: # Asam Kuat + Basa Lemah
+                    Kb = data_titran["K"]
+                    H = math.sqrt((Kw / Kb) * Cs)
+                    pH_eq = -math.log10(H)
+                    rumus_ph = f"Hidrolisis Asam: [H⁺] = √((Kw / Kb) × M_garam) = {H:.7f} M"
+                    
+            else:
+                # Lemah + Lemah (Logika disederhanakan agar tidak error)
+                if is_analit_asam:
+                    Ka = data_analit["K"]
+                    Kb = data_titran["K"]
+                else:
+                    Ka = data_titran["K"]
+                    Kb = data_analit["K"]
+                    
+                pH_eq = 7 + 0.5 * (-math.log10(Ka)) - 0.5 * (-math.log10(Kb))
+                rumus_ph = "Hidrolisis Total: pH = 7 + ½(pKa - pKb)"
+            
+            # Tampilan Hasil UI
+            st.markdown(f"""
+            <div style="background:rgba(0,0,0,0.2); border-radius:16px; padding:1.5rem; text-align:center; margin-top:1rem; border:2px solid rgba(124,58,237,0.4);">
+              <div class="mono" style="color:#94a3b8; margin-bottom:8px;">
+                V₂ = (n₁ × M₁ × V₁) / (n₂ × M₂) = ({n1} × {M1} × {V1}) / ({n2} × {M2})
+              </div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:3rem; font-weight:700; color:#a78bfa;">{V2_eq:.2f} mL</div>
+              <div style="color:#a78bfa; font-weight:600; margin-top:4px;">
+                Volume Titran yang Dibutuhkan (V₂)
+              </div>
+              <hr style="border-color:rgba(124,58,237,0.2); margin: 15px 0;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:2rem; font-weight:700; color:{klasifikasi(pH_eq)[1]};">
+                pH Titik Ekuivalen ≈ {pH_eq:.2f}
+              </div>
+              <div class="mono" style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">
+                {rumus_ph}
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            r3, r4, r5 = st.columns(3)
+            r3.metric("Mol Ekuivalen Bereaksi", f"{mol_eq:.4f} mol")
+            r4.metric("Valensi Analit (n₁)", f"{n1} eq/mol")
+            r5.metric("Valensi Titran (n₂)", f"{n2} eq/mol")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# FOOTER
+# ─────────────────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown("""
+<div style="text-align:center; font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem; color:#475569; padding:0.5rem 0;">
+  🧪 Dashboard Belajar Kimia — Simulasi Interaktif Indikator Asam-Basa
+</div>
+""", unsafe_allow_html=True)
