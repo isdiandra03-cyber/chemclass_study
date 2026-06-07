@@ -778,7 +778,7 @@ elif selected_menu == "🧮 Kalkulator pH":
                                 ["🟢 Buffer Asam (Asam Lemah + Basa Konjugasi)", "🔵 Buffer Basa (Basa Lemah + Asam Konjugasi)"], 
                                 horizontal=True)
 
-        if "Buffer Asam" in jenis_buffer::
+        if "Buffer Asam" in jenis_buffer:
             st.markdown("""
             <div class="ccard">
               <a>Persamaan Henderson-Hasselbalch (Sistem Asam):</b><br>
