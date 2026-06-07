@@ -377,7 +377,8 @@ with st.sidebar:
              "🎵 Musik Fokus", "🧪 Simulasi Indikator", "🧮 Kalkulator pH"]
     selected_menu = st.radio("", MENUS, label_visibility="collapsed")
 
-
+if "musik" in st.session_state:
+    st.audio(st.session_state["musik"], format="audio/mp3")
 # ─────────────────────────────────────────────────────────────────────
 # ███  1. DASHBOARD
 # ─────────────────────────────────────────────────────────────────────
@@ -452,20 +453,7 @@ Terima kasih telah mengunjungi aplikasi ini. Semoga perjalanan kecil yang kami t
 dalam karya ini dapat menjadi awal dari banyak pencapaian yang lebih besar di masa 
 mendatang.
 
-""")
-
-    music_url = "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/Lomba%20Sihir%20-%20Tidak%20Ada%20Salju%20di%20Sini%2C%20Pt.%206%20Selamat%20Jalan%20(Official%20Lyric%20Video)%20%5BXG4e2me2v3A%5D.mp3"
-
-    st.markdown(
-        f"""
-        <audio autoplay loop>
-            <source src="{music_url}" type="audio/mpeg">
-        </audio>
-        """,
-        unsafe_allow_html=True
-    )
-
-
+ """)
 
 # ─────────────────────────────────────────────────────────────────────
 # ███  2. TO-DO LIST
@@ -576,22 +564,9 @@ elif selected_menu == "🎵 Musik Fokus":
     st.markdown("# 🎵 Musik Fokus")
     st.markdown("Pilih musik latar untuk menemani sesi belajarmu.")
 
-    pilihan = st.selectbox("🎧 Pilih Trek:", list(MUSIK.keys()))
-    st.audio(MUSIK[pilihan], format="audio/mp3")
-
-    st.markdown("---")
-    st.markdown("""
-    <div class="ccard">
-      <b>💡 Tips Musik Belajar</b><br>
-      <span class="mono">
-      • Lo-Fi → cocok untuk membaca & menulis<br>
-      • Ambient Nature → cocok untuk konsentrasi dalam<br>
-      • Piano → cocok untuk menghafal<br>
-      • Deep Focus → cocok untuk mengerjakan soal<br>
-      • Coffee Shop → cocok untuk brainstorming
-      </span>
-    </div>
-    """, unsafe_allow_html=True)
+   pilihan = st.selectbox("🎧 Pilih Trek:", list(MUSIK.keys()))
+    st.session_state["musik"] = MUSIK[pilihan]
+    st.audio(st.session_state["musik"], format="audio/mp3")
     st.info("⚠️ Jika audio tidak muncul, coba pilih trek lain atau periksa koneksi internet.")
 
 
