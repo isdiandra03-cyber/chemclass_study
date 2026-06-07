@@ -229,8 +229,8 @@ DATABASE_LARUTAN = {
 MUSIK = {
     "Just the Way You Are": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.12.27.mpeg",
     "Kembali Untukku": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-04%20at%2021.14.44.mpeg",
-    "🌙 Piano Relaksasi": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-    "⚡ Deep Focus": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+    "🌙 Piano Relaksasi": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/WhatsApp%20Audio%202026-06-06%20at%2017.11.27.mpeg",
+    "Love Epiphany": "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/Reality%20Club%20-%20Love%20Epiphany%20(Official%20Lyric%20Video)%20%5B6REQGufi8uE%5D.mp3",
     "☕ Coffee Shop": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
 }
 
@@ -375,7 +375,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("## 📚 Menu")
     MENUS = ["🏠 Dashboard", "✅ To-Do List", "⏱️ Timer Belajar",
-             "🎵 Musik Fokus", "🧪 Simulasi Indikator", "🧮 Kalkulator pH"]
+             "🎵 Musik Fokus", "🧪 Simulasi Indikator", "🧮 Kalkulator pH","About us"]
     selected_menu = st.radio("", MENUS, label_visibility="collapsed")
 
 
@@ -933,6 +933,51 @@ elif selected_menu == "🧮 Kalkulator pH":
             r3.metric("Mol Ekuivalen Bereaksi", f"{mol_eq:.4f} mol")
             r4.metric("Valensi Analit (n₁)", f"{n1} eq/mol")
             r5.metric("Valensi Titran (n₂)", f"{n2} eq/mol")
+
+# ─────────────────────────────────────────────────────────────────────
+# ███  7. Tentang Kami         
+# ─────────────────────────────────────────────────────────────────────
+elif selected_menu == "Tentang Kami":
+    st.markdown("ChemClassStudy")
+    st.markdown("Sedikit kata dari tim pengembang")
+    se.write("""
+
+Aplikasi ini merupakan salah satu langkah kecil dalam perjalanan kami untuk terus belajar,
+berkembang, dan berkarya. Setiap proses yang dilalui, mulai dari merancang ide hingga 
+menyelesaikan setiap detail, memberikan pengalaman berharga yang akan menjadi bekal 
+untuk menghadapi tantangan di masa depan.
+
+👥 Tim Pengembang
+Chelsea
+Isdiandra
+Arif
+Nayla
+Wulan
+
+🎓 Program Studi Analisis Kimia
+🏛️ Politeknik AKA Bogor
+
+Kami percaya bahwa setiap pencapaian besar selalu berawal dari langkah sederhana yang 
+dilakukan dengan tekun dan penuh semangat. Melalui karya ini, kami berharap dapat terus 
+mengembangkan kemampuan, menciptakan inovasi yang bermanfaat, serta memberikan 
+kontribusi positif bagi lingkungan sekitar dan dunia yang terus berkembang.
+
+Terima kasih telah mengunjungi aplikasi ini. Semoga perjalanan kecil yang kami tuangkan 
+dalam karya ini dapat menjadi awal dari banyak pencapaian yang lebih besar di masa 
+mendatang.
+
+""")
+
+ music_url = "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/Lomba%20Sihir%20-%20Tidak%20Ada%20Salju%20di%20Sini%2C%20Pt.%206%20Selamat%20Jalan%20(Official%20Lyric%20Video)%20%5BXG4e2me2v3A%5D.mp3"
+
+    st.markdown(
+        f"""
+        <audio autoplay loop>
+            <source src="{music_url}" type="audio/mpeg">
+        </audio>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────
