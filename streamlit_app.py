@@ -564,10 +564,10 @@ elif selected_menu == "🎵 Musik Fokus":
     st.markdown("# 🎵 Musik Fokus")
     st.markdown("Pilih musik latar untuk menemani sesi belajarmu.")
 
-       pilihan = st.selectbox("🎧 Pilih Trek:", list(MUSIK.keys()))
-        st.session_state["musik"] = MUSIK[pilihan]
-        st.audio(st.session_state["musik"], format="audio/mp3")
-        st.info("⚠️ Jika audio tidak muncul, coba pilih trek lain atau periksa koneksi internet.")
+    pilihan = st.selectbox("🎧 Pilih Trek:", list(MUSIK.keys()))
+    st.session_state["musik"] = MUSIK[pilihan]
+    st.audio(st.session_state["musik"], format="audio/mp3")
+    st.info("⚠️ Jika audio tidak muncul, coba pilih trek lain atau periksa koneksi internet.")
 
 
 # ─────────────────────────────────────────────────────────────────────
