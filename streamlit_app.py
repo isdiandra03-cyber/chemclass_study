@@ -374,7 +374,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("## 📚 Menu")
     MENUS = ["🏠 Dashboard", "✅ To-Do List", "⏱️ Timer Belajar",
-             "🎵 Musik Fokus", "🧪 Simulasi Indikator", "🧮 Kalkulator pH","About us"]
+             "🎵 Musik Fokus", "🧪 Simulasi Indikator", "🧮 Kalkulator pH"]
     selected_menu = st.radio("", MENUS, label_visibility="collapsed")
 
 
