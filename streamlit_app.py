@@ -937,7 +937,7 @@ elif selected_menu == "🧮 Kalkulator pH":
 # ─────────────────────────────────────────────────────────────────────
 # ███  7. Tentang Kami         
 # ─────────────────────────────────────────────────────────────────────
-elif selected_menu == "Tentang Kami":
+elif selected_menu == "About us":
     st.markdown("ChemClassStudy")
     st.markdown("Sedikit kata dari tim pengembang")
     se.write("""
