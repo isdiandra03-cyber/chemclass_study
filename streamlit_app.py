@@ -802,6 +802,7 @@ elif selected_menu == "🧮 Kalkulator pH":
               <b>Persamaan Henderson-Hasselbalch (Sistem Basa):</b><br>
               <span class="mono" style="font-size:1.1rem;">pOH = pKb + log ( [BH⁺] / [B] )</span><br>
               <span class="mono" style="font-size:1.1rem;">pH = 14 - pOH</span>
+              Gunakan untuk menghitung pH larutan penyangga yang terdiri dari <b>basa lemah</b> dan garamnya.
             </div>
             """, unsafe_allow_html=True)
             
