@@ -968,7 +968,7 @@ mendatang.
 
 """)
 
- music_url = "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/Lomba%20Sihir%20-%20Tidak%20Ada%20Salju%20di%20Sini%2C%20Pt.%206%20Selamat%20Jalan%20(Official%20Lyric%20Video)%20%5BXG4e2me2v3A%5D.mp3"
+    music_url = "https://raw.githubusercontent.com/isdiandra03-cyber/chemclass_study/main/Lomba%20Sihir%20-%20Tidak%20Ada%20Salju%20di%20Sini%2C%20Pt.%206%20Selamat%20Jalan%20(Official%20Lyric%20Video)%20%5BXG4e2me2v3A%5D.mp3"
 
     st.markdown(
         f"""
