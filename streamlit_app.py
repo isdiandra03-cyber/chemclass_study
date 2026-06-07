@@ -940,7 +940,7 @@ elif selected_menu == "🧮 Kalkulator pH":
 elif selected_menu == "About us":
     st.markdown("ChemClassStudy")
     st.markdown("Sedikit kata dari tim pengembang")
-    se.write("""
+    st.write("""
 
 Aplikasi ini merupakan salah satu langkah kecil dalam perjalanan kami untuk terus belajar,
 berkembang, dan berkarya. Setiap proses yang dilalui, mulai dari merancang ide hingga 
