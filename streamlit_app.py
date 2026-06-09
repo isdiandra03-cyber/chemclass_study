@@ -269,27 +269,27 @@ def hitung_ph(data_larutan: dict, konsentrasi: float) -> tuple[float, str]:
         valensi = data_larutan["valensi"]
         H = valensi * c
         ph = -math.log10(H)
-        rumus = f"[H⁺] = Valensi × C <br> [H⁺] = {valensi} × {c:.4f} = {H:.4e} <br> pH = −log[H⁺] = **{ph:.2f}**"
+        rumus = f"[H⁺] = Valensi × C <br> [H⁺] = {valensi} × {c:.4f} = {H:.4f} <br> pH = −log[H⁺] = **{ph:.2f}**"
         
     elif jenis == "basa_kuat":
         valensi = data_larutan["valensi"]
         OH = valensi * c
         poh = -math.log10(OH)
         ph = 14 - poh
-        rumus = f"[OH⁻] = Valensi × C = {OH:.4e} <br> pOH = −log[OH⁻] = {poh:.2f} <br> pH = 14 − {poh:.2f} = **{ph:.2f}**"
+        rumus = f"[OH⁻] = Valensi × C = {OH:.4f} <br> pOH = −log[OH⁻] = {poh:.2f} <br> pH = 14 − {poh:.2f} = **{ph:.2f}**"
         
     elif jenis == "asam_lemah":
         Ka = data_larutan["K"]
         H = math.sqrt(Ka * c)
         ph = -math.log10(H)
-        rumus = f"[H⁺] = √(Ka × C) <br> [H⁺] = √({Ka:.1e} × {c:.4f}) = {H:.2e} <br> pH = −log[H⁺] = **{ph:.2f}**"
+        rumus = f"[H⁺] = √(Ka × C) <br> [H⁺] = √({Ka:.1f} × {c:.4f}) = {H:.2f} <br> pH = −log[H⁺] = **{ph:.2f}**"
         
     elif jenis == "basa_lemah":
         Kb = data_larutan["K"]
         OH = math.sqrt(Kb * c)
         poh = -math.log10(OH)
         ph = 14 - poh
-        rumus = f"[OH⁻] = √(Kb × C) <br> [OH⁻] = √({Kb:.1e} × {c:.4f}) = {OH:.2e} <br> pOH = {poh:.2f} <br> pH = 14 − {poh:.2f} = **{ph:.2f}**"
+        rumus = f"[OH⁻] = √(Kb × C) <br> [OH⁻] = √({Kb:.1f} × {c:.4f}) = {OH:.2f} <br> pOH = {poh:.2f} <br> pH = 14 − {poh:.2f} = **{ph:.2f}**"
         
     else:
         ph = 7.0
