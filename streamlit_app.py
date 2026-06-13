@@ -7,6 +7,7 @@ import time
 import math
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # ─────────────────────────────────────────────────────────────────────
 # KONFIGURASI HALAMAN  ← hanya boleh dipanggil SEKALI di paling atas
@@ -470,9 +471,7 @@ elif selected_menu == "✅ To-Do List":
         st.write("")
         if st.button("➕ Tambah", type="primary"):
             add_task(new_task)
-            datetime.now(
-                ZoneInfo("Asia/Jakarta")
-            ).strftime("%d-%m-%Y %H:%M")
+             "ts": datetime.now().strftime("%H:%M")
             st.rerun()
 
     st.markdown("---")
