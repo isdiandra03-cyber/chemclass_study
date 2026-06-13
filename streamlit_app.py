@@ -470,6 +470,9 @@ elif selected_menu == "✅ To-Do List":
         st.write("")
         if st.button("➕ Tambah", type="primary"):
             add_task(new_task)
+            datetime.now(
+                ZoneInfo("Asia/Jakarta")
+            ).strftime("%d-%m-%Y %H:%M")
             st.rerun()
 
     st.markdown("---")
