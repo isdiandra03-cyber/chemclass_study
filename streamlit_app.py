@@ -302,14 +302,16 @@ def hitung_ph(data_larutan: dict, konsentrasi: float) -> tuple[float, str]:
 
 def add_task(name):
     if name.strip():
-        from datetime import datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
-    st.session_state.tasks.append({
-        "name": name.strip(),
-        "done": False,
-        "ts": datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%H:%M")
-})
+def add_task(name):
+    if name.strip():
+        st.session_state.tasks.append({
+            "name": name.strip(),
+            "done": False,
+            "ts": datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%H:%M")
+        })
         
 def toggle_task(i):
     st.session_state.tasks[i]["done"] = not st.session_state.tasks[i]["done"]
