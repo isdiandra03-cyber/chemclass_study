@@ -321,6 +321,9 @@ def del_task(i):
     st.session_state.tasks.pop(i)
 
 
+# ─────────────────────────────────────────────────────────────────────
+# CSS TEMA
+# ─────────────────────────────────────────────────────────────────────
 def apply_theme():
     is_dark = st.session_state.theme == "Dark"
     bg     = "#0f0f1a" if is_dark else "#f0f4f8"
