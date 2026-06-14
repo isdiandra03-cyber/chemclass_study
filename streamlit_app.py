@@ -321,9 +321,6 @@ def del_task(i):
     st.session_state.tasks.pop(i)
 
 
-# ─────────────────────────────────────────────────────────────────────
-# CSS TEMA
-# ─────────────────────────────────────────────────────────────────────
 def apply_theme():
     is_dark = st.session_state.theme == "Dark"
     bg     = "#0f0f1a" if is_dark else "#f0f4f8"
@@ -333,20 +330,36 @@ def apply_theme():
     border = "rgba(255,255,255,0.1)"  if is_dark else "rgba(0,0,0,0.1)"
     inp    = "#16213e" if is_dark else "#ffffff"
     btn    = "#7c3aed" if is_dark else "#3b82f6"
-
     st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap');
-
     html, body, [class*="css"] {{ font-family: 'Outfit', sans-serif; }}
     .stApp {{ background-color: {bg}; }}
-    h1,h2,h3,h4,h5,h6,p,label,span,div {{ color: {txt} !important; }}
+
+    /* Hanya targetkan teks utama, jangan paksa semua div/span */
+    .stApp, .stApp p, .stApp label, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6 {{
+        color: {txt};
+    }}
+
     section[data-testid="stSidebar"] {{ background-color: {sbg}; }}
+    section[data-testid="stSidebar"] * {{ color: {txt}; }}
+
     .stTextInput>div>div>input, .stNumberInput>div>div>input {{
         background-color: {inp} !important; color: {txt} !important;
         border: 1px solid {border} !important; border-radius: 8px !important;
     }}
+
+    /* Selectbox tertutup */
     .stSelectbox>div>div>div {{ background-color: {inp} !important; color: {txt} !important; }}
+
+    /* Dropdown list options (BaseWeb popover) */
+    div[data-baseweb="popover"] li,
+    div[data-baseweb="menu"] li,
+    ul[role="listbox"] li {{
+        background-color: {inp} !important;
+        color: {txt} !important;
+    }}
+
     .stButton>button {{
         background: linear-gradient(135deg, {btn}, #06b6d4) !important;
         color: white !important; border: none !important; border-radius: 10px !important;
@@ -359,12 +372,12 @@ def apply_theme():
     .streamlit-expanderHeader {{ background-color: {card} !important; border-radius: 10px !important; }}
     hr {{ border-color: {border} !important; }}
 
-    /* Custom card class */
     .ccard {{
         background: {card}; border: 1px solid {border};
         border-radius: 16px; padding: 1.2rem 1.5rem; margin-bottom: 0.8rem;
+        color: {txt};
     }}
-    .mono {{ font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }}
+    .mono {{ font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: {txt}; }}
     .badge {{
         display: inline-block; padding: 3px 12px; border-radius: 999px;
         font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace;
