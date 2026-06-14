@@ -540,19 +540,31 @@ elif selected_menu == "⏱️ Timer Belajar":
         if st.button("🔄 Reset Timer"):
             st.session_state.time_left = default_time
             st.session_state.timer_running = False
+            st.session_state.pop("end_time", None)
             st.rerun()
 
         st.markdown("---")
         ck1, ck2 = st.columns(2)
         with ck1:
             if st.button("▶️ Mulai", type="primary"):
-                st.session_state.time_left = st.session_state.time_left or default_time
+                durasi = st.session_state.time_left or default_time
+                st.session_state.end_time = datetime.now(ZoneInfo("Asia/Jakarta")).timestamp() + durasi
                 st.session_state.timer_running = True
                 st.rerun()
         with ck2:
             if st.button("⏹️ Stop"):
                 st.session_state.timer_running = False
+                # Simpan sisa waktu saat distop
+                if "end_time" in st.session_state:
+                    sisa = st.session_state.end_time - datetime.now(ZoneInfo("Asia/Jakarta")).timestamp()
+                    st.session_state.time_left = max(0, int(sisa))
+                    st.session_state.pop("end_time", None)
                 st.rerun()
+
+    # Hitung sisa waktu berdasarkan timestamp jika timer berjalan
+    if st.session_state.timer_running and "end_time" in st.session_state:
+        sisa = st.session_state.end_time - datetime.now(ZoneInfo("Asia/Jakarta")).timestamp()
+        st.session_state.time_left = max(0, int(sisa))
 
     with ct2:
         menit = st.session_state.time_left // 60
@@ -578,10 +590,10 @@ elif selected_menu == "⏱️ Timer Belajar":
     if st.session_state.timer_running:
         if st.session_state.time_left > 0:
             time.sleep(1)
-            st.session_state.time_left -= 1
             st.rerun()
         else:
             st.session_state.timer_running = False
+            st.session_state.pop("end_time", None)
             st.balloons()
             st.success("⏰ Waktu selesai! Saatnya istirahat 🎉")
 
