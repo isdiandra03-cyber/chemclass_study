@@ -305,6 +305,7 @@ def add_task(name):
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+
 def add_task(name):
     if name.strip():
         st.session_state.tasks.append({
@@ -312,9 +313,11 @@ def add_task(name):
             "done": False,
             "ts": datetime.now(ZoneInfo("Asia/Jakarta")).strftime("%H:%M")
         })
-        
+
+
 def toggle_task(i):
     st.session_state.tasks[i]["done"] = not st.session_state.tasks[i]["done"]
+
 
 def del_task(i):
     st.session_state.tasks.pop(i)
