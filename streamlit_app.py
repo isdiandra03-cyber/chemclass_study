@@ -300,8 +300,6 @@ def hitung_ph(data_larutan: dict, konsentrasi: float) -> tuple[float, str]:
         
     return round(max(0.0, min(14.0, ph)), 2), rumus
 
-def add_task(name):
-    if name.strip():
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
